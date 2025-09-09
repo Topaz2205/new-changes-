@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>רשימת קטגוריות</h2>
+    <a href="{{ url_for('category_routes.add_category_form') }}" class="btn btn-success mb-3">➕ הוסף קטגוריה</a>
+
+    {% if categories %}
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>מזהה</th>
+                    <th>שם</th>
+                    <th>תיאור</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.id }}</td>
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.description }}</td>
+                    <td>
+                        <a href="{{ url_for('category_routes.edit_category_form', id=category.id) }}" class="btn btn-warning btn-sm">✏️ ערוך</a>
+                        <form method="POST" action="{{ url_for('category_routes.delete_category', id=category.id) }}" style="display:inline-block;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('האם אתה בטוח שברצונך למחוק?')">🗑️ מחק</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>לא נמצאו קטגוריות.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}הוספת הזמנה חדשה{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>הוספת הזמנה חדשה</h1>
+
+    <form method="POST">
+        <label for="user_id">מזהה משתמש:</label><br>
+        <input type="number" id="user_id" name="user_id" required><br><br>
+
+        <label for="customer_id">מזהה לקוח:</label><br>
+        <input type="number" id="customer_id" name="customer_id" required><br><br>
+
+        <label for="employee_id">מזהה עובד:</label><br>
+        <input type="number" id="employee_id" name="employee_id"><br><br>
+
+        <label for="status">סטטוס הזמנה:</label><br>
+        <select id="status" name="status" required>
+            <option value="Pending">ממתינה</option>
+            <option value="Shipped">נשלחה</option>
+            <option value="Delivered">נמסרה</option>
+            <option value="Cancelled">בוטלה</option>
+        </select><br><br>
+
+        <label for="ship_via">חברת שילוח:</label><br>
+        <input type="text" id="ship_via" name="ship_via" required><br><br>
+
+        <label for="freight">עלות משלוח:</label><br>
+        <input type="number" step="0.01" id="freight" name="freight" required><br><br>
+
+        <label for="total_amount">סכום כולל:</label><br>
+        <input type="number" step="0.01" id="total_amount" name="total_amount" required><br><br>
+
+        <label for="expected_delivery">תאריך משלוח צפוי:</label><br>
+        <input type="date" id="expected_delivery" name="expected_delivery"><br><br>
+
+        <label for="actual_delivery">תאריך משלוח בפועל:</label><br>
+        <input type="date" id="actual_delivery" name="actual_delivery"><br><br>
+
+        <label for="shipped_date">תאריך יציאה למשלוח:</label><br>
+        <input type="date" id="shipped_date" name="shipped_date"><br><br>
+
+        <!-- שדות למוצר (כרגע מוצר אחד בלבד) -->
+        <hr>
+        <h3>פרטי מוצר בהזמנה</h3>
+
+        <label for="product_id">מזהה מוצר:</label><br>
+        <input type="number" id="product_id" name="product_id" required><br><br>
+
+        <label for="quantity">כמות:</label><br>
+        <input type="number" id="quantity" name="quantity" required><br><br>
+
+        <label for="price">מחיר בעת ההזמנה:</label><br>
+        <input type="number" step="0.01" id="price" name="price" required><br><br>
+
+        <button type="submit" class="btn">שמור הזמנה</button>
+    </form>
+</div>
+{% endblock %}

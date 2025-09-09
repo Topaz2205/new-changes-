@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}מערכת Ordersync{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Noto Sans Hebrew', Arial, sans-serif;
+            background-color: #f5f8fa;
+            margin: 0;
+            direction: rtl;
+        }
+
+        .navbar {
+            background-color: #3498db;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 20px 40px;
+        }
+
+        .user-info {
+            color: white;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <a href="{{ url_for('main_routes.home') }}">🏠 דף הבית</a>
+            {% if session.get('username') %}
+                <span class="user-info">| 👤 {{ session.username }}</span>
+            {% endif %}
+        </div>
+        <div class="nav-links">
+            {% if "view_orders" in session.get("permissions", []) %}
+                <a href="{{ url_for('orders.list_orders') }}">ניהול הזמנות</a>
+            {% endif %}
+            {% if "view_inventory" in session.get("permissions", []) %}
+                <a href="{{ url_for('inventory.inventory_list') }}">ניהול מלאי</a>
+            {% endif %}
+            {% if "view_users" in session.get("permissions", []) %}
+                <a href="{{ url_for('access.users_list') }}">ניהול גישה</a>
+            {% endif %}
+            {% if session.get("username") %}
+                <a href="{{ url_for('auth.logout') }}">🚪 התנתק</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>

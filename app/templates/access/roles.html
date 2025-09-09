@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>רשימת תפקידים</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <h1>רשימת תפקידים</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}"><strong>{{ category }}:</strong> {{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    {% if roles %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>מזהה</th>
+                    <th>שם תפקיד</th>
+                    <th>תיאור</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in roles %}
+                <tr>
+                    <td>{{ role.id }}</td>
+                    <td>{{ role.name }}</td>
+                    <td>{{ role.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>אין תפקידים מוגדרים במערכת.</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('access.add_role') }}">➕ הוסף תפקיד חדש</a>
+
+</body>
+</html>

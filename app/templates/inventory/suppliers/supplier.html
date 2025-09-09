@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">רשימת ספקים</h2>
+
+    <a href="{{ url_for('supplier_routes.add_supplier_form') }}" class="btn btn-success mb-3">➕ הוסף ספק חדש</a>
+
+    {% if suppliers %}
+    <table class="table table-bordered table-hover text-center">
+        <thead class="thead-light">
+            <tr>
+                <th>מס'</th>
+                <th>שם החברה</th>
+                <th>איש קשר</th>
+                <th>אימייל</th>
+                <th>כתובת</th>
+                <th>עיר</th>
+                <th>מדינה</th>
+                <th>טלפון</th>
+                <th>פעולות</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for supplier in suppliers %}
+            <tr>
+                <td>{{ supplier.supplier_id }}</td>
+                <td>{{ supplier.company_name }}</td>
+                <td>{{ supplier.contact_name }}</td>
+                <td>{{ supplier.contact_email }}</td>
+                <td>{{ supplier.address }}</td>
+                <td>{{ supplier.city }}</td>
+                <td>{{ supplier.country }}</td>
+                <td>{{ supplier.phone }}</td>
+                <td>
+                    <a href="{{ url_for('supplier_routes.edit_supplier_form', id=supplier.id) }}" class="btn btn-sm btn-warning">✏️ ערוך</a>
+                    <form action="{{ url_for('supplier_routes.delete_supplier', id=supplier.id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('האם אתה בטוח שברצונך למחוק את הספק?');">
+                        <button type="submit" class="btn btn-sm btn-danger">🗑️ מחק</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="alert alert-info">אין ספקים להצגה.</div>
+    {% endif %}
+</div>
+{% endblock %}

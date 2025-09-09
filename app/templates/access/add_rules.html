@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>הוספת תפקיד חדש</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <h1>הוספת תפקיד חדש</h1>
+
+    <form method="post">
+        <label>שם תפקיד:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>תיאור:</label><br>
+        <textarea name="description" required></textarea><br><br>
+
+        <input type="submit" value="הוסף">
+    </form>
+
+    <br>
+    <a href="{{ url_for('access.roles_list') }}">⬅ חזרה לרשימת התפקידים</a>
+
+</body>
+</html>

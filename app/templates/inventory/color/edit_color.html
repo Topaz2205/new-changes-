@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>✏️ עריכת צבע</h2>
+
+    <form action="{{ url_for('product_color_routes.edit_color', color_id=color['id']) }}" method="POST">
+        <div class="form-group">
+            <label for="color_name">שם הצבע</label>
+            <input type="text" class="form-control" id="color_name" name="color_name"
+                   value="{{ color['color_name'] }}" required>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="hex_code">קוד Hex</label>
+            <input type="text" class="form-control" id="hex_code" name="hex_code"
+                   value="{{ color['hex_code'] }}" placeholder="#000000" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4">💾 עדכן</button>
+        <a href="{{ url_for('product_color_routes.list_colors') }}" class="btn btn-secondary mt-4">↩️ חזרה</a>
+    </form>
+</div>
+{% endblock %}

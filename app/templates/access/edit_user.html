@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}עריכת משתמש{% endblock %}
+
+{% block content %}
+<h2>עריכת משתמש</h2>
+
+<form method="POST" style="max-width: 400px; margin: auto;">
+    <div style="margin-bottom: 15px;">
+        <label>שם משתמש:</label><br>
+        <input type="text" name="username" value="{{ user.username }}" required>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label>אימייל:</label><br>
+        <input type="email" name="email" value="{{ user.email }}" required>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label>סיסמה:</label><br>
+        <input type="text" name="password" value="{{ user.password }}" required>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label>תפקיד:</label><br>
+        <select name="role_id" required>
+            {% for role in roles %}
+                <option value="{{ role.id }}" {% if role.name == user.role %}selected{% endif %}>{{ role.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="btn">💾 שמור</button>
+    <a href="{{ url_for('access.users_list') }}" class="btn">🔙 חזור</a>
+</form>
+
+{% endblock %}

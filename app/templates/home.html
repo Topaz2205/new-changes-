@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}דף הבית - OrderSync{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 50px;">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="OrderSync Logo" style="width: 200px; margin-bottom: 30px;">
+    <h1 style="color: #2c3e50; font-size: 32px; margin-bottom: 10px;">
+        ברוך הבא למערכת <strong>ORDERSYNC</strong>
+    </h1>
+    <p style="font-size: 18px; margin-bottom: 25px;">
+        בחר את אחד האזורים לניהול:
+    </p>
+
+    <div class="nav-buttons">
+        {% if 'view_orders' in session.get('permissions', []) %}
+    <a href="{{ url_for('orders.list_orders') }}" class="home-button">ניהול הזמנות</a>
+        {% endif %}
+
+        {% if 'view_inventory' in session.get('permissions', []) %}
+            <a href="{{ url_for('inventory.inventory_list') }}" class="home-button">ניהול מלאי</a>
+        {% endif %}
+
+        {% if 'view_users' in session.get('permissions', []) %}
+            <a href="{{ url_for('access.users_list') }}" class="home-button">ניהול גישה</a>
+        {% endif %}
+
+    </div>
+</div>
+
+<style>
+    .nav-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .home-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    width: 200px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.home-button:hover {
+    background-color: #2980b9;
+}
+
+    
+</style>
+{% endblock %}

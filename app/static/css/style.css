@@ -1,0 +1,114 @@
+/* בסיס לעיצוב אחיד לכל הדפים במערכת */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+}
+
+.container {
+    max-width: 100%;
+    margin: 40px auto;
+    padding: 30px 40px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+h1, h2, h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button, .btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover, .btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-sm {
+    padding: 6px 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 4px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-blue {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-blue:hover {
+    background-color: #0056b3;
+}
+
+.btn-red {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-red:hover {
+    background-color: #b02a37;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
+table th, table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: right;
+    vertical-align: top;
+    word-break: break-word;
+}
+
+table th {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+ul {
+    padding-right: 18px;
+    margin: 0;
+}
+
+ul li {
+    line-height: 1.6;
+}

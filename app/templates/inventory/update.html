@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}עדכון מלאי{% endblock %}
+
+{% block content %}
+<h1>עדכון מלאי למזהה {{ inventory_id }}</h1>
+
+<form method="post">
+    <label for="amount">כמות להוספה:</label>
+    <input type="number" name="amount" id="amount" required>
+    <button type="submit">עדכן</button>
+</form>
+
+<p><a href="{{ url_for('inventory.inventory_list') }}">חזרה לרשימת המלאי</a></p>
+{% endblock %}

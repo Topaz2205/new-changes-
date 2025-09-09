@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>הוסף צבע חדש</h2>
+
+    <form action="{{ url_for('product_color_routes.add_color') }}" method="POST">
+        <div class="form-group">
+            <label for="color_name">שם הצבע</label>
+            <input type="text" class="form-control" id="color_name" name="color_name" required>
+        </div>
+
+        <div class="form-group mt-3">
+            <label for="hex_code">קוד Hex</label>
+            <input type="text" class="form-control" id="hex_code" name="hex_code" placeholder="#000000" required>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-4">💾 שמור</button>
+        <a href="{{ url_for('product_color_routes.list_colors') }}" class="btn btn-secondary mt-4">↩️ חזרה לרשימת הצבעים</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}רשימת משתמשים - OrderSync{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 20px;">רשימת משתמשים</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">מזהה</th>
+                    <th style="width: 10%;">שם משתמש</th>
+                    <th style="width: 20%;">אימייל</th>
+                    <th style="width: 10%;">סיסמה</th>
+                    <th style="width: 10%;">תפקיד</th>
+                    <th style="width: 25%;">הרשאות</th>
+                    <th style="width: 10%;">נוצר בתאריך</th>
+                    <th style="width: 10%;">פעולות</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.password }}</td>
+                    <td>{{ user.role_name }}</td>
+                    <td>
+                        <ul style="padding-right: 20px; margin: 0; list-style-type: disc;">
+                            {% for perm in user.permissions %}
+                                <li style="margin-bottom: 4px;">{{ perm }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td style="white-space: nowrap;">{{ user.created_at }}</td>
+                    <td style="white-space: nowrap;">
+                        {% if 'manage_users' in session.get('permissions', []) %}
+                            <a href="{{ url_for('access.edit_user', user_id=user.id) }}" class="btn-sm btn-blue">✏️ ערוך</a>
+                            <form method="POST" action="{{ url_for('access.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('האם אתה בטוח שברצונך למחוק את המשתמש?');">
+                                <button type="submit" class="btn-sm btn-red">🗑️ מחק</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if 'manage_users' in session.get('permissions', []) %}
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('access.add_user') }}" style="color: #007bff; font-weight: bold;">
+            ➕ הוסף משתמש חדש
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
