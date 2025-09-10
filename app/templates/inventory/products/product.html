@@ -7,7 +7,7 @@
   <a class="btn btn-primary" href="{{ url_for('product_routes.add_product_form') }}">+ הוסף מוצר</a>
 </div>
 
-<table id="productsTable" class="table table-striped table-hover align-middle">
+<table id="productsTable" class="table table-striped table-hover align-middle js-datatable table-st" id="...">
   <thead>
     <tr>
       <th>#</th>
@@ -30,7 +30,7 @@
         <td>{{ p.units_in_stock }}</td>
         <td class="text-nowrap table-actions">
             <a class="btn btn-sm btn-outline-secondary"
-                href="{{ url_for('product_routes.edit_product_form', product_id=p.id) }}">עריכה</a>
+                href="{{ url_for('product_routes.edit_product_form', id=p.id) }}">עריכה</a>
 
             <form method="post"
                     action="{{ url_for('product_routes.delete_product', id=p.id) }}"
@@ -39,9 +39,10 @@
                 <button type="submit" class="btn btn-sm btn-outline-danger">מחיקה</button>
             </form>
 
-            <button class="btn btn-sm btn-outline-primary"
+            <button class="btn btn-sm btn-info"
                     hx-get="{{ url_for('product_routes.add_stock_partial', product_id=p.id) }}"
-                    hx-target="#modalBody"
+                    hx-target="#genericModal .modal-body"
+                    hx-trigger="click"
                     data-bs-toggle="modal" data-bs-target="#genericModal">
                 הוסף מלאי
             </button>
@@ -52,14 +53,4 @@
 </table>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-  // DataTables = חיפוש/מיון/דפדוף אוטומטיים
-  $(function() {
-    $('#productsTable').DataTable({
-      pageLength: 10,
-      order: [[0, 'asc']]
-    });
-  });
-</script>
-{% endblock %}
+
