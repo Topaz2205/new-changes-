@@ -1,0 +1,299 @@
+-- ===== ROLES =====
+INSERT INTO roles (name) VALUES
+  ('Admin'), ('SalesManager'), ('WarehouseManager'), ('CustomerService'), ('User')
+ON CONFLICT (name) DO NOTHING;
+
+-- ===== PERMISSIONS =====
+INSERT INTO permissions (name) VALUES
+  ('view_inventory'), ('manage_inventory'),
+  ('view_orders'),    ('manage_orders'),
+  ('view_users'),     ('manage_users')
+ON CONFLICT (name) DO NOTHING;
+
+-- ===== USERS =====
+-- נכניס משתמשים כשה-role_id נשלף לפי שם התפקיד
+INSERT INTO users (username, email, password, role_id) VALUES
+  ('admin',      'admin@example.com',      'adminpass',   (SELECT id FROM roles WHERE name='Admin')),
+  ('sales1',     'sales1@example.com',     'salespass',   (SELECT id FROM roles WHERE name='SalesManager')),
+  ('warehouse1', 'warehouse1@example.com', 'warehousepass',(SELECT id FROM roles WHERE name='WarehouseManager')),
+  ('support1',   'support1@example.com',   'supportpass', (SELECT id FROM roles WHERE name='CustomerService')),
+  ('user1',      'user1@example.com',      'userpass',    (SELECT id FROM roles WHERE name='User'))
+ON CONFLICT (username) DO NOTHING;
+
+-- ===== ROLE PERMISSIONS =====
+-- Admin: all
+INSERT INTO rolepermissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.name IN ('manage_users','view_users','view_orders','manage_orders','view_inventory','manage_inventory')
+WHERE r.name = 'Admin'
+ON CONFLICT DO NOTHING;
+
+-- SalesManager: orders (view+manage)
+INSERT INTO rolepermissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.name IN ('view_orders','manage_orders')
+WHERE r.name = 'SalesManager'
+ON CONFLICT DO NOTHING;
+
+-- WarehouseManager: inventory (view+manage)
+INSERT INTO rolepermissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.name IN ('view_inventory','manage_inventory')
+WHERE r.name = 'WarehouseManager'
+ON CONFLICT DO NOTHING;
+
+-- CustomerService: orders (view+manage)
+INSERT INTO rolepermissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.name IN ('view_orders','manage_orders')
+WHERE r.name = 'CustomerService'
+ON CONFLICT DO NOTHING;
+
+-- User: minimal views
+INSERT INTO rolepermissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.name IN ('view_orders','view_inventory')
+WHERE r.name = 'User'
+ON CONFLICT DO NOTHING;
+
+-- ===== SUPPLIERS =====
+-- בסכמה שלך יש רק company_name; נשמור לפיו ונקשר בטבלאות אחרות עם subselect
+INSERT INTO suppliers (company_name) VALUES
+  ('Sanifix Ltd.'), ('AquaPro Systems'), ('Nir Faucets'), ('PlumbLine'), ('HydroFlow'),
+  ('TapTech'), ('FlowFix'), ('DripMaster'), ('AquaPro Elite'), ('SanitaryPro')
+ON CONFLICT DO NOTHING;
+
+-- ===== CATEGORIES =====
+INSERT INTO categories (name) VALUES
+  ('ברזים'),
+  ('כיורים'),
+  ('אסלות'),
+  ('אמבטיות'),
+  ('מקלחונים'),
+  ('ארונות אמבטיה'),
+  ('ברזי מטבח'),
+  ('אביזרי תלייה'),
+  ('ניאגרות'),
+  ('כלים לאינסטלציה')
+ON CONFLICT (name) DO NOTHING;
+
+-- ===== PRODUCT COLORS =====
+-- בסכמה שלך: productcolors(name, hex_code)
+INSERT INTO productcolors (id, name, hex_code) VALUES
+  (1, 'כרום',              '#C0C0C0'),
+  (2, 'כסוף',              '#C0C0C0'),
+  (3, 'לבן',               '#FFFFFF'),
+  (4, 'שחור מט',           '#1C1C1C'),
+  (5, 'נירוסטה',           '#B0B0B0'),
+  (6, 'ניקל מוברש',        '#D3D3D3'),
+  (7, 'נירוסטה מבריקה',    '#A9A9A9')
+ON CONFLICT DO NOTHING;
+
+-- ===== PRODUCTS =====
+-- נכניס עם קישור לפי שמות (כדי לא להסתמך על idים קשיחים)
+INSERT INTO products
+  (name, supplier_id, category_id, quantity_per_unit, color_id, price, discontinued)
+VALUES
+  ('ברז מטבח נשלף',
+    (SELECT id FROM suppliers WHERE company_name='Sanifix Ltd.'),
+    (SELECT id FROM categories WHERE name='ברזים'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='כרום'),
+    349.90, FALSE),
+
+  ('ראש טוש עגול',
+    (SELECT id FROM suppliers WHERE company_name='AquaPro Systems'),
+    (SELECT id FROM categories WHERE name='מקלחונים'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='כסוף'),
+    199.00, FALSE),
+
+  ('כיור מונח עגול',
+    (SELECT id FROM suppliers WHERE company_name='Nir Faucets'),
+    (SELECT id FROM categories WHERE name='כיורים'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='לבן'),
+    450.00, FALSE),
+
+  ('ברז אמבטיה קיר',
+    (SELECT id FROM suppliers WHERE company_name='Sanifix Ltd.'),
+    (SELECT id FROM categories WHERE name='ברזים'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='שחור מט'),
+    599.00, FALSE),
+
+  ('סיפון נירוסטה',
+    (SELECT id FROM suppliers WHERE company_name='FlowFix'),
+    (SELECT id FROM categories WHERE name='כלים לאינסטלציה'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='נירוסטה'),
+    75.00, FALSE),
+
+  ('אסלה תלויה',
+    (SELECT id FROM suppliers WHERE company_name='HydroFlow'),
+    (SELECT id FROM categories WHERE name='אסלות'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='לבן'),
+    1200.00, FALSE),
+
+  ('ניאגרה סמויה',
+    (SELECT id FROM suppliers WHERE company_name='PlumbLine'),
+    (SELECT id FROM categories WHERE name='ניאגרות'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='לבן'),
+    990.00, FALSE),
+
+  ('ברז כיור נמוך',
+    (SELECT id FROM suppliers WHERE company_name='Nir Faucets'),
+    (SELECT id FROM categories WHERE name='ברזים'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='ניקל מוברש'),
+    310.00, FALSE),
+
+  ('מראה עם תאורה',
+    (SELECT id FROM suppliers WHERE company_name='DripMaster'),
+    (SELECT id FROM categories WHERE name='ארונות אמבטיה'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='כסוף'),
+    680.00, FALSE),
+
+  ('מתלה מגבות קיר',
+    (SELECT id FROM suppliers WHERE company_name='AquaPro Elite'),
+    (SELECT id FROM categories WHERE name='אביזרי תלייה'),
+    '1 יחידה',
+    (SELECT id FROM productcolors WHERE name='נירוסטה מבריקה'),
+    115.00, FALSE)
+ON CONFLICT DO NOTHING;
+
+-- ===== CUSTOMERS =====
+-- מתאים לסכמה שלך (בלי contact_title/customer_type/customer_tag)
+INSERT INTO customers (contact_name, address, city, postal_code, country, phone, email) VALUES
+  ('Yossi Cohen', 'Herzl 10',     'Tel Aviv',   '61000', 'Israel', '050-1234567', 'yossi@example.com'),
+  ('Dana Levi',   'HaAtzmaut 5',  'Haifa',      '32000', 'Israel', '054-9876543', 'dana@example.com'),
+  ('Amit Bar',    'Weizmann 22',  'Jerusalem',  '91000', 'Israel', '052-4567890', 'amitb@example.com'),
+  ('Roni Gilad',  'Ben Gurion 8', 'Ramat Gan',  '52000', 'Israel', '053-3214567', 'ronig@example.com'),
+  ('Noa Avraham', 'Begin 3',      'Ashdod',     '77000', 'Israel', '054-8765432', 'noaa@example.com')
+ON CONFLICT DO NOTHING;
+
+-- ===== EMPLOYEES =====
+-- מקשרים ל-users לפי username, ומנהל לפי email (או לפי user_id של המנהל)
+INSERT INTO employees (user_id, first_name, last_name, position, birth_date, hire_date, address, city, postal_code, country, phone, email, manager_id)
+VALUES
+  ((SELECT id FROM users WHERE username='admin'),      'David', 'Levi',  'CEO',              '1980-01-01','2010-01-01','Hasharon 1','Tel Aviv','61000','Israel','0501234567','david@sanitary.com', NULL),
+  ((SELECT id FROM users WHERE username='sales1'),     'Rina',  'Cohen', 'Sales Manager',    '1985-02-02','2015-03-01','Herzl 2','Haifa','32000','Israel','0502345678','rina@sanitary.com', (SELECT id FROM employees WHERE email='david@sanitary.com')),
+  ((SELECT id FROM users WHERE username='warehouse1'), 'Oren',  'Mizrahi','Warehouse Manager','1983-03-03','2014-04-01','Begin 3','Beer Sheva','84000','Israel','0503456789','oren@sanitary.com', (SELECT id FROM employees WHERE email='david@sanitary.com')),
+  ((SELECT id FROM users WHERE username='support1'),   'Maya',  'Bar',   'Support Manager',  '1990-04-04','2018-05-01','Ben Yehuda 4','Jerusalem','91000','Israel','0504567890','maya@sanitary.com', (SELECT id FROM employees WHERE email='david@sanitary.com')),
+  ((SELECT id FROM users WHERE username='user1'),      'Yoni',  'Katz',  'Sales Rep',        '1992-05-05','2020-06-01','HaPalmach 5','Ashdod','77000','Israel','0505678901','yoni@sanitary.com', (SELECT id FROM employees WHERE email='rina@sanitary.com'))
+ON CONFLICT DO NOTHING;
+
+-- ===== ORDERS =====
+-- מיפוי סטטוסים ל-Postgres CHECK
+INSERT INTO orders (order_id, customer_id, employee_id, user_id, status, ship_via, freight, total_amount, expected_delivery, actual_delivery, shipped_date, order_date)
+VALUES
+  (1,
+   (SELECT customer_id FROM customers WHERE contact_name='Yossi Cohen'),
+   (SELECT id FROM employees WHERE email='david@sanitary.com'),
+   (SELECT id FROM users WHERE username='sales1'),
+   'NEW', 'FedEx', 25.50, 300.00, '2025-07-25 00:00:00', NULL, NULL, '2025-07-17 00:00:00'),
+
+  (2,
+   (SELECT customer_id FROM customers WHERE contact_name='Dana Levi'),
+   (SELECT id FROM employees WHERE email='rina@sanitary.com'),
+   (SELECT id FROM users WHERE username='admin'),
+   'SHIPPED', 'DHL', 15.00, 450.00, '2025-07-20 00:00:00', NULL, '2025-07-18 00:00:00','2025-07-17 00:00:00'),
+
+  (3,
+   (SELECT customer_id FROM customers WHERE contact_name='Amit Bar'),
+   (SELECT id FROM employees WHERE email='oren@sanitary.com'),
+   (SELECT id FROM users WHERE username='warehouse1'),
+   'DELIVERED', 'UPS', 12.00, 180.00, '2025-07-10 00:00:00', '2025-07-11 00:00:00', '2025-07-10 00:00:00','2025-07-17 00:00:00'),
+
+  (4,
+   (SELECT customer_id FROM customers WHERE contact_name='Yossi Cohen'),
+   (SELECT id FROM employees WHERE email='maya@sanitary.com'),
+   (SELECT id FROM users WHERE username='support1'),
+   'NEW', 'Self Pickup', 0.00, 90.00, '2025-07-28 00:00:00', NULL, NULL,'2025-07-17 00:00:00'),
+
+  (5,
+   (SELECT customer_id FROM customers WHERE contact_name='Noa Avraham'),
+   (SELECT id FROM employees WHERE email='rina@sanitary.com'),
+   (SELECT id FROM users WHERE username='admin'),
+   'CANCELLED', 'GLS', 20.00, 0.00, '2025-07-30 00:00:00', NULL, NULL,'2025-07-17 00:00:00')
+ON CONFLICT DO NOTHING;
+
+-- ===== ORDER ITEMS =====
+INSERT INTO orderitems (order_id, product_id, quantity, price_at_order) VALUES
+  (1, (SELECT id FROM products WHERE name='ראש טוש עגול'), 1, 499.99),
+  (2, (SELECT id FROM products WHERE name='סיפון נירוסטה'), 1, 149.99),
+  (3, (SELECT id FROM products WHERE name='ברז אמבטיה קיר'), 1, 89.99),
+  (4, (SELECT id FROM products WHERE name='כיור מונח עגול'), 1, 199.99)
+ON CONFLICT DO NOTHING;
+
+-- ===== ORDER UPDATES =====
+INSERT INTO orderupdates (order_id, status, comment, update_type, old_value, new_value) VALUES
+  (1, 'SHIPPED',   'Changed status',                 'Status Change',                 'NEW',        'SHIPPED'),
+  (2, 'DELIVERED', 'Order was successfully delivered','Status Change',                'SHIPPED',    'DELIVERED'),
+  (3, 'DELIVERED', 'Discount applied to order',      'Total Amount Update',          '220.00',     '180.00'),
+  (4, 'NEW',       'Customer requested delay',       'Expected Delivery Date Change','2025-07-17', '2025-07-20'),
+  (5, 'CANCELLED', 'Order cancelled by customer',    'Status Change',                'CONFIRMED',  'CANCELLED')
+ON CONFLICT DO NOTHING;
+
+-- ===== SHIPMENTS =====
+INSERT INTO shipments (order_id, tracking_number, shipping_provider, estimated_delivery_date, status) VALUES
+  ((SELECT order_id FROM orders WHERE order_id=1), 'TRACK123', 'Israel Post', '2025-07-20', 'SHIPPED'),
+  ((SELECT order_id FROM orders WHERE order_id=2), 'FEDEX456', 'FedEx',       '2025-07-22', 'IN TRANSIT'),
+  ((SELECT order_id FROM orders WHERE order_id=3), 'DHL789',   'DHL',         '2025-07-25', 'DELIVERED'),
+  ((SELECT order_id FROM orders WHERE order_id=4), 'UPS555',   'UPS',         '2025-07-21', 'PENDING'),
+  ((SELECT order_id FROM orders WHERE order_id=5), 'GLS222',   'GLS',         '2025-07-23', 'RETURNED')
+ON CONFLICT DO NOTHING;
+
+-- ===== DELIVERY STATUS =====
+INSERT INTO deliverystatus (order_id, status, delay_reason) VALUES
+  (1, 'On Time',   NULL),
+  (2, 'Delayed',   'Customs issue'),
+  (3, 'Delivered', NULL),
+  (4, 'Delayed',   'Logistics problem'),
+  (5, 'In Transit',NULL)
+ON CONFLICT DO NOTHING;
+
+-- ===== INVENTORY =====
+INSERT INTO inventory (product_id, quantity) VALUES
+  ((SELECT id FROM products WHERE name='אסלה תלויה'), 120),
+  ((SELECT id FROM products WHERE name='ניאגרה סמויה'), 65),
+  ((SELECT id FROM products WHERE name='ברז כיור נמוך'), 30),
+  ((SELECT id FROM products WHERE name='מראה עם תאורה'), 95),
+  ((SELECT id FROM products WHERE name='מתלה מגבות קיר'), 50)
+ON CONFLICT DO NOTHING;
+
+-- ===== INVENTORY HISTORY =====
+INSERT INTO inventoryhistory (product_id, change, note) VALUES
+  ((SELECT id FROM products WHERE name='ברז מטבח נשלף'),  100, 'Initial stock'),
+  ((SELECT id FROM products WHERE name='ראש טוש עגול'),    50, 'Initial stock'),
+  ((SELECT id FROM products WHERE name='כיור מונח עגול'),  75, 'Initial stock'),
+  ((SELECT id FROM products WHERE name='ברז אמבטיה קיר'),  30, 'Initial stock'),
+  ((SELECT id FROM products WHERE name='סיפון נירוסטה'),   60, 'Initial stock')
+ON CONFLICT DO NOTHING;
+
+-- ===== SUPPLIER INVENTORY =====
+-- סדר העמודות בסכמה שלך: (supplier_id, product_id, quantity, unit_price)
+INSERT INTO supplierinventory (supplier_id, product_id, quantity, unit_price) VALUES
+  ((SELECT id FROM suppliers WHERE company_name='Sanifix Ltd.'),    (SELECT id FROM products WHERE name='ברז מטבח נשלף'),   120, 345.00),
+  ((SELECT id FROM suppliers WHERE company_name='AquaPro Systems'), (SELECT id FROM products WHERE name='ראש טוש עגול'),     80, 190.00),
+  ((SELECT id FROM suppliers WHERE company_name='Nir Faucets'),     (SELECT id FROM products WHERE name='כיור מונח עגול'),   50, 420.00),
+  ((SELECT id FROM suppliers WHERE company_name='PlumbLine'),       (SELECT id FROM products WHERE name='ברז אמבטיה קיר'),   35, 570.00),
+  ((SELECT id FROM suppliers WHERE company_name='HydroFlow'),       (SELECT id FROM products WHERE name='סיפון נירוסטה'),   200, 70.00),
+  ((SELECT id FROM suppliers WHERE company_name='TapTech'),         (SELECT id FROM products WHERE name='אסלה תלויה'),       25, 1100.00),
+  ((SELECT id FROM suppliers WHERE company_name='FlowFix'),         (SELECT id FROM products WHERE name='ניאגרה סמויה'),     40, 940.00),
+  ((SELECT id FROM suppliers WHERE company_name='DripMaster'),      (SELECT id FROM products WHERE name='ברז כיור נמוך'),     60, 295.00),
+  ((SELECT id FROM suppliers WHERE company_name='AquaPro Elite'),   (SELECT id FROM products WHERE name='מראה עם תאורה'),     15, 620.00),
+  ((SELECT id FROM suppliers WHERE company_name='SanitaryPro'),     (SELECT id FROM products WHERE name='מתלה מגבות קיר'),   100, 105.00)
+ON CONFLICT DO NOTHING;
+
+-- ===== Sync sequences (מומלץ אם הזנת מזהים ידניים היכן שעשית) =====
+SELECT setval(pg_get_serial_sequence('productcolors','id'),  (SELECT COALESCE(MAX(id),0) FROM productcolors));
+SELECT setval(pg_get_serial_sequence('orders','order_id'),   (SELECT COALESCE(MAX(order_id),0) FROM orders));
