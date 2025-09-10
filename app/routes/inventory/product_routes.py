@@ -3,6 +3,8 @@ from app.controllers.inventory.product_controller import ProductController
 from app.controllers.inventory.category_controller import CategoryController
 from app.controllers.inventory.supplier_controller import SupplierController
 from app.controllers.inventory.product_color_controller import ColorController
+from app.controllers.inventory.inventory_controller import InventoryController
+from app.DB.db import get_db_connection
 from app.models.models_inventory.product import Product
 from datetime import datetime
 
@@ -15,7 +17,7 @@ product_controller = ProductController()
 category_controller = CategoryController()
 supplier_controller = SupplierController()
 color_controller = ColorController()
-
+inventory_controller = InventoryController()
 # ----------------------------
 # רשימת מוצרים
 # ----------------------------
@@ -115,22 +117,42 @@ def delete_product(id):
 # ============================================================
 
 # מחזיר Partial שמוזרק למודל (טופס להזנת כמות)
-@product_routes.route('/products/<int:product_id>/add-stock', methods=['GET'])
-def add_stock_partial(product_id):
-    # אצלך שם הפונקציה הוא get_product(id)
-    product = product_controller.get_product(product_id)
-    return render_template('inventory/products/_add_stock_partial.html', product=product)
-
-# מקבל את הטופס ומעדכן את הכמות במלאי
-@product_routes.route('/products/<int:product_id>/add-stock', methods=['POST'])
+@product_routes.route('/products/<int:product_id>/stock/add', methods=['POST'])
 def add_stock(product_id):
-    delta = int(request.form['delta'])
-    product = product_controller.get_product(product_id)
-    current_stock = int(getattr(product, 'units_in_stock', 0) or 0)
-    new_stock = current_stock + delta
+    try:
+        amount = int(request.form.get('amount', 0))
+    except (TypeError, ValueError):
+        amount = 0
 
-    # עדכון דרך הבקר הקיים שלך
-    product_controller.update_product(product_id, {'units_in_stock': new_stock})
+    if amount <= 0:
+        flash("כמות חייבת להיות גדולה מאפס", "error")
+        # אם הגיע דרך HTMX - נבצע Redirect צד לקוח
+        if 'HX-Request' in request.headers:
+            resp = make_response('', 204)
+            resp.headers['HX-Redirect'] = url_for('product_routes.list_products')
+            return resp
+        return redirect(url_for('product_routes.list_products'))
 
-    flash(f'המלאי למוצר #{product_id} עודכן ל-{new_stock}', 'success')
+# 1) מקור אמת: Inventory
+    inventory_controller.add_stock(product_id, amount)
+
+    # 2) (אופציונלי אבל שומר סנכרון) – לעדכן גם את Products.units_in_stock לאותה כמות חדשה
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE Products
+        SET units_in_stock = COALESCE((SELECT quantity FROM Inventory WHERE product_id = ?), units_in_stock)
+        WHERE id = ?
+    """, (product_id, product_id))
+    conn.commit()
+    conn.close()
+
+    flash("המלאי עודכן בהצלחה", "success")
+
+    # תמיכה ב-HTMX: נבקש מהדפדפן לטעון מחדש את רשימת המוצרים
+    if 'HX-Request' in request.headers:
+        resp = make_response('', 204)
+        resp.headers['HX-Redirect'] = url_for('product_routes.list_products')
+        return resp
+
     return redirect(url_for('product_routes.list_products'))
