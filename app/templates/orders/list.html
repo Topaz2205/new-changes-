@@ -3,51 +3,68 @@
 {% block title %}רשימת הזמנות{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>רשימת הזמנות</h1>
+<div class="container" dir="rtl">
+  <h1>רשימת הזמנות</h1>
 
-    <a href="{{ url_for('orders.create_order') }}" class="btn">הוסף הזמנה חדשה</a>
+  <a href="{{ url_for('orders.create_order') }}" class="btn">הוסף הזמנה חדשה</a>
 
-    <table>
-       <thead>
-            <tr>
-                <th>מספר הזמנה</th>
-                <th>לקוח</th>
-                <th>עובד</th>
-                <th>תאריך יצירה</th>
-                <th>סטטוס</th>
-                <th>סה"כ פריטים</th>
-                <th>משלוח</th>
-                <th>אופן משלוח</th>
-                <th>צפי אספקה</th>
-                <th>תאריך אספקה בפועל</th>
-                <th>תאריך משלוח</th>
-                <th>עודכן לאחרונה</th>
-                <th>פעולות</th>
-            </tr>
-        </thead>
+  <table>
+    <thead>
+      <tr>
+        <th>מספר הזמנה</th>
+        <th>לקוח</th>
+        <th>עובד</th>
+        <th>תאריך יצירה</th>
+        <th>סטטוס</th>
+        <th>סה"כ</th>
+        <th>עלות משלוח</th>
+        <th>אופן משלוח</th>
+        <th>צפי אספקה</th>
+        <th>אספקה בפועל</th>
+        <th>תאריך משלוח</th>
+        <th>עודכן לאחרונה</th>
+        <th>פעולות</th>
+      </tr>
+    </thead>
 
-        <tbody>
-            {% for order in orders %}
-            <tr>
-                <td>{{ order.order_id }}</td>
-                <td>{{ order.customer_name }}</td>
-                <td>{{ order.employee_name }}</td>
-                <td>{{ order.order_date.strftime('%Y-%m-%d') if order.order_date else '' }}</td>
-                <td>{{ order.status }}</td>
-                <td>{{ order.total_amount }}</td>
-                <td>{{ order.freight }}</td>
-                <td>{{ order.ship_via }}</td>
-                <td>{{ order.expected_delivery.strftime('%Y-%m-%d') if order.expected_delivery else '' }}</td>
-                <td>{{ order.actual_delivery.strftime('%Y-%m-%d') if order.actual_delivery else '' }}</td>
-                <td>{{ order.shipped_date.strftime('%Y-%m-%d') if order.shipped_date else '' }}</td>
-                <td>{{ order.updated_at.strftime('%Y-%m-%d') if order.updated_at else '' }}</td>
-                <td><a href="{{ url_for('orders.edit_order', order_id=order.order_id) }}" class="btn btn-primary">פרטים</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    <tbody>
+      {% for order in orders %}
+      {% set s = (order.status or '')|upper %}
+      <tr>
+        <td>{{ order.order_id }}</td>
+        <td>{{ order.customer_name }}</td>
+        <td>{{ order.employee_name }}</td>
+        <td>{{ order.order_date.strftime('%Y-%m-%d') if order.order_date else '' }}</td>
 
+        <!-- טופס שינוי סטטוס מהיר -->
+        <td>
+          <form method="POST" action="{{ url_for('orders.set_status', order_id=order.order_id) }}">
+            <select name="status" required>
+              <option value="NEW"       {{ 'selected' if s == 'NEW' else '' }}>NEW</option>
+              <option value="PAID"      {{ 'selected' if s == 'PAID' else '' }}>PAID</option>
+              <option value="SHIPPED"   {{ 'selected' if s == 'SHIPPED' else '' }}>SHIPPED</option>
+              <option value="DELIVERED" {{ 'selected' if s == 'DELIVERED' else '' }}>DELIVERED</option>
+              <option value="CANCELLED" {{ 'selected' if s == 'CANCELLED' else '' }}>CANCELLED</option>
+            </select>
+            <input type="text" name="delay_reason" placeholder="סיבת עיכוב (לא חובה)" style="max-width: 10rem;">
+            <button type="submit">עדכן</button>
+          </form>
+        </td>
 
-    </table>
+        <td>{{ order.total_amount }}</td>
+        <td>{{ order.freight }}</td>
+        <td>{{ order.ship_via }}</td>
+        <td>{{ order.expected_delivery.strftime('%Y-%m-%d') if order.expected_delivery else '' }}</td>
+        <td>{{ order.actual_delivery.strftime('%Y-%m-%d') if order.actual_delivery else '' }}</td>
+        <td>{{ order.shipped_date.strftime('%Y-%m-%d') if order.shipped_date else '' }}</td>
+        <td>{{ order.updated_at.strftime('%Y-%m-%d') if order.updated_at else '' }}</td>
+
+        <td>
+          <a href="{{ url_for('orders.edit_order', order_id=order.order_id) }}" class="btn btn-primary">פרטים</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}
