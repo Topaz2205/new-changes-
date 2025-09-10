@@ -132,8 +132,8 @@ CREATE TABLE IF NOT EXISTS Orders (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id)     REFERENCES Users(id),
     FOREIGN KEY (customer_id) REFERENCES Customers(customer_id),
-    FOREIGN KEY (employee_id) REFERENCES Employees(id)
-    CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
+    FOREIGN KEY (employee_id) REFERENCES Employees(id),
+    CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status)
 );
 -- === OrderItems ===
 CREATE TABLE IF NOT EXISTS OrderItems (
