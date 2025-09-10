@@ -29,16 +29,22 @@
         <td>{{ "%.2f"|format(p.unit_price) }}</td>
         <td>{{ p.units_in_stock }}</td>
         <td class="text-nowrap table-actions">
-          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('product_routes.edit_product_form', product_id=p.id) }}">עריכה</a>
-          <a class="btn btn-sm btn-outline-danger"
-             onclick="return confirm('למחוק מוצר?')"
-             href="{{ url_for('product_routes.delete_product', product_id=p.id) }}">מחיקה</a>
-          <button class="btn btn-sm btn-outline-primary"
-                  hx-get="{{ url_for('product_routes.add_stock_partial', product_id=p.id) }}"
-                  hx-target="#modalBody"
-                  data-bs-toggle="modal" data-bs-target="#genericModal">
-            הוסף מלאי
-          </button>
+            <a class="btn btn-sm btn-outline-secondary"
+                href="{{ url_for('product_routes.edit_product_form', product_id=p.id) }}">עריכה</a>
+
+            <form method="post"
+                    action="{{ url_for('product_routes.delete_product', id=p.id) }}"
+                    style="display:inline"
+                    onsubmit="return confirm('למחוק מוצר?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">מחיקה</button>
+            </form>
+
+            <button class="btn btn-sm btn-outline-primary"
+                    hx-get="{{ url_for('product_routes.add_stock_partial', product_id=p.id) }}"
+                    hx-target="#modalBody"
+                    data-bs-toggle="modal" data-bs-target="#genericModal">
+                הוסף מלאי
+            </button>
         </td>
       </tr>
     {% endfor %}
