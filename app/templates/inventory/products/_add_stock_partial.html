@@ -1,0 +1,7 @@
+<form method="post" action="{{ url_for('product_routes.add_stock', product_id=product.id) }}">
+  <div class="mb-3">
+    <label class="form-label">כמות להוספה</label>
+    <input class="form-control" type="number" name="delta" required min="1">
+  </div>
+  <button class="btn btn-primary">עדכן</button>
+</form>
