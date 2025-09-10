@@ -17,17 +17,16 @@ CREATE TABLE IF NOT EXISTS Users (
     password TEXT NOT NULL,
     role_id INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (role_id) REFERENCES Roles(id)
+    FOREIGN KEY (role_id) REFERENCES Roles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 -- === RolePermissions ===
 CREATE TABLE IF NOT EXISTS RolePermissions (
     role_id INTEGER NOT NULL,
     permission_id INTEGER NOT NULL,
     PRIMARY KEY (role_id, permission_id),
-    FOREIGN KEY (role_id) REFERENCES Roles(id),
-    FOREIGN KEY (permission_id) REFERENCES Permissions(id)
+    FOREIGN KEY (role_id)     REFERENCES Roles(id)       ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES Permissions(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 -- === Suppliers ===
 CREATE TABLE IF NOT EXISTS Suppliers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,9 +77,9 @@ CREATE TABLE IF NOT EXISTS Products (
     discontinued BOOLEAN DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES Categories(id),
-    FOREIGN KEY (supplier_id) REFERENCES Suppliers(id),
-    FOREIGN KEY (color_id) REFERENCES ProductColors(id)
+    FOREIGN KEY (category_id) REFERENCES Categories(id)     ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (supplier_id) REFERENCES Suppliers(id)      ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (color_id)    REFERENCES ProductColors(id)  ON DELETE SET NULL  ON UPDATE CASCADE
 );
 -- === Customers ===
 CREATE TABLE IF NOT EXISTS Customers (
@@ -113,16 +112,16 @@ CREATE TABLE IF NOT EXISTS Employees (
     phone TEXT,
     email TEXT,
     manager_id INTEGER,
-    FOREIGN KEY (user_id) REFERENCES Users(id),
-    FOREIGN KEY (manager_id) REFERENCES Employees(id)
+    FOREIGN KEY (user_id)   REFERENCES Users(id)      ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (manager_id) REFERENCES Employees(id) ON DELETE SET NULL  ON UPDATE CASCADE
 );
 -- === Orders ===
 CREATE TABLE IF NOT EXISTS Orders (
     order_id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     customer_id INTEGER NOT NULL,
-    employee_id INTEGER,
-    status TEXT NOT NULL,
+    employee_id INTEGER, -- יכול להיות NULL
+    status TEXT NOT NULL CHECK (status IN ('NEW','PAID','SHIPPED','DELIVERED','CANCELLED')),
     total_amount REAL,
     freight REAL,
     ship_via TEXT,
@@ -131,10 +130,11 @@ CREATE TABLE IF NOT EXISTS Orders (
     order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     shipped_date DATETIME,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(id),
+    FOREIGN KEY (user_id)     REFERENCES Users(id),
     FOREIGN KEY (customer_id) REFERENCES Customers(customer_id),
     FOREIGN KEY (employee_id) REFERENCES Employees(id)
-    );
+    CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
+);
 -- === OrderItems ===
 CREATE TABLE IF NOT EXISTS OrderItems (
     order_id INTEGER NOT NULL,
@@ -142,9 +142,10 @@ CREATE TABLE IF NOT EXISTS OrderItems (
     quantity INTEGER NOT NULL DEFAULT 1,
     price_at_order REAL NOT NULL,
     PRIMARY KEY (order_id, product_id),
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
-    FOREIGN KEY (product_id) REFERENCES Products(id)
+    FOREIGN KEY (order_id)  REFERENCES Orders(order_id)  ON DELETE CASCADE  ON UPDATE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES Products(id)     ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
 -- === OrderUpdates ===
 CREATE TABLE IF NOT EXISTS OrderUpdates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,13 +163,14 @@ CREATE TABLE IF NOT EXISTS Shipments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id INTEGER NOT NULL,
     tracking_number TEXT,
-    shipping_provider TEXT,
+    shipping_provider TEXT, -- אפשר לשדרג ל-FK ל-Shippers(id)
     shipped_date DATETIME,
     estimated_delivery_date DATETIME,
     delivery_date DATETIME,
     status TEXT NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
 -- === DeliveryStatus ===
 CREATE TABLE IF NOT EXISTS DeliveryStatus (
     status_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -176,15 +178,16 @@ CREATE TABLE IF NOT EXISTS DeliveryStatus (
     status TEXT NOT NULL,
     delay_reason TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 -- === Inventory ===
 CREATE TABLE IF NOT EXISTS Inventory (
     product_id INTEGER PRIMARY KEY,
     quantity INTEGER NOT NULL DEFAULT 0,
     last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES Products(id)
+    FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
 -- === InventoryHistory ===
 CREATE TABLE IF NOT EXISTS InventoryHistory (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,7 +195,7 @@ CREATE TABLE IF NOT EXISTS InventoryHistory (
     change INTEGER NOT NULL,
     timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     note TEXT,
-    FOREIGN KEY (product_id) REFERENCES Products(id)
+    FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- === SupplierInventory ===
@@ -203,6 +206,6 @@ CREATE TABLE IF NOT EXISTS SupplierInventory (
     unit_price REAL DEFAULT 0.0,
     last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (supplier_id, product_id),
-    FOREIGN KEY (supplier_id) REFERENCES Suppliers(id),
-    FOREIGN KEY (product_id) REFERENCES Products(id)
+    FOREIGN KEY (supplier_id) REFERENCES Suppliers(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (product_id)  REFERENCES Products(id)  ON DELETE CASCADE ON UPDATE CASCADE
 );
