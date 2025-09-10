@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from app.controllers.inventory.product_controller import ProductController
 from app.controllers.inventory.category_controller import CategoryController
 from app.controllers.inventory.supplier_controller import SupplierController
@@ -26,6 +26,7 @@ def list_products():
     products = product_controller.get_all_products()
     # שים לב: הנתיב לתבנית תואם למבנה שלך app/templates/inventory/products/product.html
     return render_template('inventory/products/product.html', products=products)
+
 
 # ----------------------------
 # טופס הוספת מוצר
@@ -64,6 +65,14 @@ def add_product():
     flash('המוצר נוסף בהצלחה', 'success')
     return redirect(url_for('product_routes.list_products'))
 
+
+@product_routes.route('/products/<int:product_id>/stock/add', methods=['GET'])
+def add_stock_partial(product_id):
+    # טוען את הטופס למודאל (HTMX)
+    product = product_controller.get_product(product_id)
+    if not product:
+        abort(404)
+    return render_template('inventory/products/_add_stock_partial.html', product=product)
 # ----------------------------
 # טופס עריכת מוצר
 # ----------------------------
