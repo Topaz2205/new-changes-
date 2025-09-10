@@ -1,7 +1,7 @@
 {# Navbar קבוע עליון עם הרשאות, שם משתמש והתנתקות — משתמש ישירות ב-session #}
 <nav class="navbar navbar-expand-lg fixed-top navbar-st" dir="rtl">
   <div class="container-fluid">
-    <a class="navbar-brand fw-semibold" href="{{ url_for('product_routes.list_products') }}">OrderSync</a>
+    <a class="navbar-brand fw-semibold" href="{{ url_for('main_routes.home') }}">OrderSync</a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
             aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,8 +36,8 @@
 
         {% if can_view_inventory %}
           <li class="nav-item">
-            <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('product_routes.') }}"
-               href="{{ url_for('product_routes.list_products') }}">
+            <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('inventory.') or request.endpoint and request.endpoint.startswith('inventory.') }}"
+               href="{{ url_for('inventory.inventory_list') }}">
               מלאי
             </a>
           </li>
@@ -56,9 +56,9 @@
       <div class="d-flex align-items-center gap-2">
         {% if is_logged_in %}
           <span class="navbar-user">שלום, {{ username }}</span>
-          <a class="btn btn-sm btn-outline-dark" href="{{ url_for('auth_routes.logout') }}">התנתקות</a>
+          <a class="btn btn-sm btn-outline-dark" href="{{ url_for('auth.logout') }}">התנתקות</a>
         {% else %}
-          <a class="btn btn-sm btn-dark" href="{{ url_for('auth_routes.login') }}">התחברות</a>
+          <a class="btn btn-sm btn-dark" href="{{ url_for('auth.login') }}">התחברות</a>
         {% endif %}
       </div>
     </div>
