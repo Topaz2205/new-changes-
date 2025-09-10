@@ -1,0 +1,66 @@
+{# Navbar קבוע עליון עם הרשאות, שם משתמש והתנתקות — משתמש ישירות ב-session #}
+<nav class="navbar navbar-expand-lg fixed-top navbar-st" dir="rtl">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="{{ url_for('product_routes.list_products') }}">OrderSync</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+
+      {# --- הרשאות/זיהוי מתוך ה-session --- #}
+      {% set perms = session.get('permissions', []) %}
+      {% set user  = session.get('user') %}
+      {% set username = (user.username if user and user.get('username') else (user.get('username') if user else session.get('username'))) %}
+      {% set is_logged_in = username is not none %}
+
+      {# אם אין כלל permissions ב-session, נציג את כל הפריטים (ברירת מחדל לפיתוח) #}
+      {% set open_mode = (perms | length == 0) %}
+
+      {% set can_view_orders    = open_mode or ('view_orders' in perms) or ('manage_orders' in perms) %}
+      {% set can_view_inventory = open_mode or ('view_inventory' in perms) or ('manage_inventory' in perms) %}
+      {% set can_view_users     = open_mode or ('view_users' in perms) or ('manage_users' in perms) %}
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+        {% if can_view_orders %}
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('orders.') }}"
+               href="{{ url_for('orders.list_orders') }}">
+              הזמנות
+            </a>
+          </li>
+        {% endif %}
+
+        {% if can_view_inventory %}
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('product_routes.') }}"
+               href="{{ url_for('product_routes.list_products') }}">
+              מלאי
+            </a>
+          </li>
+        {% endif %}
+
+        {% if can_view_users %}
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('access.') }}"
+               href="{{ url_for('access.users_list') }}">
+              ניהול גישה
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        {% if is_logged_in %}
+          <span class="navbar-user">שלום, {{ username }}</span>
+          <a class="btn btn-sm btn-outline-dark" href="{{ url_for('auth_routes.logout') }}">התנתקות</a>
+        {% else %}
+          <a class="btn btn-sm btn-dark" href="{{ url_for('auth_routes.login') }}">התחברות</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
