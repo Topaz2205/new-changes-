@@ -40,24 +40,40 @@
         <td>{{ row.product_id }}</td>
 
         <td class="col-thumb">
-          {% if row.image_url %}
-            <img class="prod-thumb" src="{{ row.image_url }}" alt="תמונה - {{ row.product_name }}" loading="lazy">
-          {% else %}
-            <div class="prod-thumb-fallback">אין תמונה</div>
-          {% endif %}
-        </td>
++          {% if row.image_url %}
++            <img class="prod-thumb"
++                 src="{{ row.image_url }}"
++                 alt="תמונה - {{ row.product_name }}"
++                 loading="lazy"
++                 data-image-preview="{{ row.image_url }}">
++          {% else %}
++            <div class="prod-thumb-fallback">אין תמונה</div>
++          {% endif %}
++        </td>
 
         <td>{{ row.product_name }}</td>
         <td>{{ row.category_name }}</td>
         <td>{{ row.supplier_name }}</td>
 
         <td>
-          <span class="color-dot" style="background-color: {{ row.color_hex or '#ccc' }};"></span>
-          {{ row.color_name or '—' }}
-        </td>
++          {% if row.color_hex %}
++            <span class="d-inline-block rounded-circle border"
++                  style="width:14px;height:14px;background-color: {{ row.color_hex }};"
++                  title="{{ row.color_name }}"></span>
++            <span class="ms-1">{{ row.color_name }}</span>
++          {% else %}
++            <span class="text-muted">—</span>
++          {% endif %}
++        </td>
 
         <td>{{ row.quantity }}</td>
-        <td>{{ row.last_updated or '—' }}</td>
+        <td>
++          {% if row.last_updated and row.last_updated.strftime %}
++            {{ row.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
++          {% else %}
++            {{ row.last_updated or '—' }}
++          {% endif %}
++        </td>
       </tr>
     {% endfor %}
   </tbody>
