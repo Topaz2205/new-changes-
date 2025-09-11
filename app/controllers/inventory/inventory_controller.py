@@ -74,8 +74,10 @@ class InventoryController:
                 p.name                         AS product_name,
                 COALESCE(c.name, '')           AS category_name,
                 COALESCE(col.color_name, '')   AS color_name,
+                COALESCE(col.hex_code, '')   AS color_hex,
+                p.image_url                    AS image_url,
                 COALESCE(s.company_name, '')   AS supplier_name,
-                COALESCE(i.quantity, 0)        AS quantity,
+                COALESCE(i.quantity, p.units_in_stock, 0)        AS quantity,
                 i.last_updated                 AS last_updated
             FROM Products p
             LEFT JOIN Categories     c   ON c.id  = p.category_id
@@ -96,6 +98,8 @@ class InventoryController:
                 "product_name":   row["product_name"],
                 "category_name":  row["category_name"],
                 "color_name":     row["color_name"],
+                "color_hex":      row["color_hex"], 
+                "image_url":    row["image_url"],
                 "supplier_name":  row["supplier_name"],
                 "quantity":       row["quantity"],          # 0 אם אין רשומת מלאי
                 "last_updated":   row["last_updated"],      # יכול להיות None אם אין רשומה

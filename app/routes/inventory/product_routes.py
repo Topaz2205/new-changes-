@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, make_response
 from app.controllers.inventory.product_controller import ProductController
 from app.controllers.inventory.category_controller import CategoryController
 from app.controllers.inventory.supplier_controller import SupplierController

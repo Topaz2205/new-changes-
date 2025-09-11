@@ -13,17 +13,6 @@ INSERT OR IGNORE INTO Permissions (name) VALUES
 ('view_orders'), ('manage_orders'),
 ('view_users'), ('manage_users');
 
-
-
--- === Users ===
-
-INSERT OR IGNORE INTO Users (username, email, password, role_id) VALUES
-('admin', 'admin@example.com', 'adminpass', 1),
-('sales1', 'sales1@example.com', 'salespass', 2),
-('warehouse1', 'warehouse1@example.com', 'warehousepass', 3),
-('support1', 'support1@example.com', 'supportpass', 4),
-('user1', 'user1@example.com', 'userpass', 5);
-
 -- === RolePermissions ===
 
 
@@ -68,6 +57,17 @@ JOIN Permissions p ON p.name IN ('view_orders','view_inventory')
 WHERE r.name = 'User';
 
 
+-- === Users ===
+
+INSERT OR IGNORE INTO Users (username, email, password, role_id) VALUES
+('admin', 'admin@example.com', 'adminpass', 1),
+('sales1', 'sales1@example.com', 'salespass', 2),
+('warehouse1', 'warehouse1@example.com', 'warehousepass', 3),
+('support1', 'support1@example.com', 'supportpass', 4),
+('user1', 'user1@example.com', 'userpass', 5);
+
+
+
 
 -- === Suppliers ===
 
@@ -97,14 +97,6 @@ INSERT OR IGNORE INTO Categories (id, name, description) VALUES
 (9, 'ניאגרות', 'מערכות הדחה סמויות וגלויות'),
 (10, 'כלים לאינסטלציה', 'צנרת, מחברים ואביזרי התקנה');
 
--- === Shippers ===
-
-INSERT OR IGNORE INTO Shippers (company_name, phone) VALUES
-('FedEx', '1-800-463-3339'),
-('UPS', '1-800-742-5877'),
-('DHL', '1-800-225-5345'),
-('Israel Post', '1-700-500-171'),
-('ZigZag Express', '03-900-1234');
 
 -- === ProductColors ===
 INSERT OR IGNORE INTO ProductColors (id, color_name, hex_code) VALUES
@@ -155,11 +147,11 @@ INSERT OR IGNORE INTO Orders (
     ship_via, freight, total_amount,
     expected_delivery, actual_delivery, shipped_date, order_date
 ) VALUES
-(1, 1, 1, 2, 'Pending', 'FedEx', 25.50, 300.00, '2025-07-25 00:00:00', NULL, NULL, '2025-07-17 00:00:00'),
-(2, 2, 2, 1, 'Shipped', 'DHL', 15.00, 450.00, '2025-07-20 00:00:00', NULL, '2025-07-18 00:00:00', '2025-07-17 00:00:00'),
-(3, 3, 3, 3, 'Delivered', 'UPS', 12.00, 180.00, '2025-07-10 00:00:00', '2025-07-11 00:00:00', '2025-07-10 00:00:00', '2025-07-17 00:00:00'),
-(4, 1, 4, 4, 'Pending', 'Self Pickup', 0.00, 90.00, '2025-07-28 00:00:00', NULL, NULL, '2025-07-17 00:00:00'),
-(5, 5, 2, 1, 'Cancelled', 'GLS', 20.00, 0.00, '2025-07-30 00:00:00', NULL, NULL, '2025-07-17 00:00:00');
+(1, 1, 1, 2, 'NEW', 'FedEx', 25.50, 300.00, '2025-07-25 00:00:00', NULL, NULL, '2025-07-17 00:00:00'),
+(2, 2, 2, 1, 'SHIPPED', 'DHL', 15.00, 450.00, '2025-07-20 00:00:00', NULL, '2025-07-18 00:00:00', '2025-07-17 00:00:00'),
+(3, 3, 3, 3, 'DELIVERED', 'UPS', 12.00, 180.00, '2025-07-10 00:00:00', '2025-07-11 00:00:00', '2025-07-10 00:00:00', '2025-07-17 00:00:00'),
+(4, 1, 4, 4, 'PAID', 'Self Pickup', 0.00, 90.00, '2025-07-28 00:00:00', NULL, NULL, '2025-07-17 00:00:00'),
+(5, 5, 2, 1, 'CANCELLED', 'GLS', 20.00, 0.00, '2025-07-30 00:00:00', NULL, NULL, '2025-07-17 00:00:00');
 
 -- === OrderItems ===
 
@@ -186,6 +178,15 @@ INSERT OR IGNORE INTO Shipments (order_id, tracking_number, shipping_provider, e
 (3, 'DHL789', 'DHL', '2025-07-25', 'Delivered'),
 (4, 'UPS555', 'UPS', '2025-07-21', 'Pending'),
 (5, 'GLS222', 'GLS', '2025-07-23', 'Returned');
+
+-- === Shippers ===
+
+INSERT OR IGNORE INTO Shippers (company_name, phone) VALUES
+('FedEx', '1-800-463-3339'),
+('UPS', '1-800-742-5877'),
+('DHL', '1-800-225-5345'),
+('Israel Post', '1-700-500-171'),
+('ZigZag Express', '03-900-1234');
 
 -- === DeliveryStatus ===
 
