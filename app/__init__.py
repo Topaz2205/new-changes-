@@ -52,3 +52,5 @@ def create_app():
         print(f"{rule.endpoint:30s} => {rule.rule}")
 
     return app
+
+
