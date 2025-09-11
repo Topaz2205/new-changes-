@@ -77,7 +77,7 @@ class InventoryController:
                 COALESCE(col.hex_code, '')   AS color_hex,
                 p.image_url                    AS image_url,
                 COALESCE(s.company_name, '')   AS supplier_name,
-                COALESCE(i.quantity, p.units_in_stock, 0)        AS quantity,
+                COALESCE(i.quantity, 0)        AS quantity,
                 i.last_updated                 AS last_updated
             FROM Products p
             LEFT JOIN Categories     c   ON c.id  = p.category_id
