@@ -1,72 +1,83 @@
 {% extends "base.html" %}
-
+{% block title %}מוצרים{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">רשימת מוצרים</h2>
-
-    <a href="{{ url_for('product_routes.add_product_form') }}" class="btn btn-primary mb-3">➕ הוסף מוצר</a>
-
-    {% if products %}
-        <table class="table table-bordered table-hover table-striped text-center align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>מזהה</th>
-                    <th>שם</th>
-                    <th>ספק</th>
-                    <th>קטגוריה</th>
-                    <th>כמות ליחידה</th>
-                    <th>צבע</th>
-                    <th>מחיר</th>
-                    <th>מלאי</th>
-                    <th>תיאור</th>
-                    <th>תמונה</th>
-                    <th>האם הופסק</th>
-                    <th>פעולות</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for product in products %}
-                <tr>
-                    <td>{{ product.id }}</td>
-                    <td>{{ product.name }}</td>
-                    <td>{{ product.supplier }}</td>
-                    <td>{{ product.category }}</td>
-                    <td>{{ product.quantity_per_unit }}</td>
-                    <td>
-                        {% if product.color_name and product.hex_code %}
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                <span style="display:inline-block; width:18px; height:18px; border-radius:50%; border:1px solid #999; background-color:{{ product.hex_code }};"></span>
-                                <span>{{ product.color_name }}</span>
-                            </div>
-                        {% elif product.color_name %}
-                            {{ product.color_name }}
-                        {% else %}
-                            <span class="text-muted">ללא</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ product.unit_price }}</td>
-                    <td>{{ product.units_in_stock }}</td>
-                    <td>{{ product.description or '-' }}</td>
-                    <td>
-                        {% if product.image_url %}
-                            <img src="{{ product.image_url }}" alt="תמונה" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px;">
-                        {% else %}
-                            <span class="text-muted">אין תמונה</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ '✅' if product.discontinued else '❌' }}</td>
-                    <td>
-                        <a href="{{ url_for('product_routes.edit_product_form', id=product.id) }}" class="btn btn-sm btn-warning">✏️ ערוך</a>
-                        <form action="{{ url_for('product_routes.delete_product', id=product.id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('האם אתה בטוח שברצונך למחוק מוצר זה?');">
-                            <button type="submit" class="btn btn-sm btn-danger">🗑️ מחק</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="alert alert-info">לא נמצאו מוצרים להצגה.</div>
-    {% endif %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 m-0">מוצרים</h1>
+  <a class="btn btn-primary" href="{{ url_for('product_routes.add_product_form') }}">+ הוסף מוצר</a>
 </div>
+
+<table id="productsTable" class="table table-striped table-hover table-bordered align-middle js-datatable table-st">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th class="col-thumb">תמונה</th>
+      <th>שם</th>
+      <th>קטגוריה</th>
+      <th>ספק</th>
+      <th>צבע</th>
+      <th class="text-end">מחיר</th>
+      <th class="text-end">מלאי</th>
+      <th class="text-nowrap">פעולות</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in products %}
+      <tr>
+        <td>{{ p.id }}</td>
+
+        <td class="col-thumb">
+          {% if p.image_url %}
+            <img class="prod-thumb"
+                 src="{{ p.image_url }}"
+                 alt="תמונה - {{ p.name }}"
+                 loading="lazy"
+                 data-image-preview="{{ p.image_url }}">
+          {% else %}
+            <div class="prod-thumb-fallback">אין תמונה</div>
+          {% endif %}
+        </td>
+
+        <td>{{ p.name }}</td>
+        <td>{{ p.category_name }}</td>
+        <td>{{ p.supplier_name }}</td>
+
+        <td>
+          {% if p.color_hex %}
+            <span class="d-inline-block rounded-circle border"
+                  style="width:14px;height:14px;background-color: {{ p.color_hex }};"
+                  title="{{ p.color_name }}"></span>
+            <span class="ms-1">{{ p.color_name }}</span>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+
+        <td class="text-end">
+          {% if p.unit_price is not none %}{{ "%.2f"|format(p.unit_price) }}{% else %}—{% endif %}
+        </td>
+        <td class="text-end">{{ p.units_in_stock }}</td>
+
+        <td class="text-nowrap table-actions">
+          <a class="btn btn-sm btn-outline-secondary"
+             href="{{ url_for('product_routes.edit_product_form', id=p.id) }}">עריכה</a>
+
+          <form method="post"
+                action="{{ url_for('product_routes.delete_product', id=p.id) }}"
+                style="display:inline"
+                onsubmit="return confirm('למחוק מוצר?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">מחיקה</button>
+          </form>
+
+          <button class="btn btn-sm btn-info"
+                  hx-get="{{ url_for('product_routes.add_stock_partial', product_id=p.id) }}"
+                  hx-target="#genericModal .modal-body"
+                  hx-trigger="click"
+                  data-bs-toggle="modal" data-bs-target="#genericModal">
+            הוסף מלאי
+          </button>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
