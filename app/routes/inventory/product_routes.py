@@ -145,17 +145,6 @@ def add_stock(product_id):
 # 1) מקור אמת: Inventory
     inventory_controller.add_stock(product_id, amount)
 
-    # 2) (אופציונלי אבל שומר סנכרון) – לעדכן גם את Products.units_in_stock לאותה כמות חדשה
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE Products
-        SET units_in_stock = COALESCE((SELECT quantity FROM Inventory WHERE product_id = ?), units_in_stock)
-        WHERE id = ?
-    """, (product_id, product_id))
-    conn.commit()
-    conn.close()
-
     flash("המלאי עודכן בהצלחה", "success")
 
     # תמיכה ב-HTMX: נבקש מהדפדפן לטעון מחדש את רשימת המוצרים
@@ -165,3 +154,4 @@ def add_stock(product_id):
         return resp
 
     return redirect(url_for('product_routes.list_products'))
+
