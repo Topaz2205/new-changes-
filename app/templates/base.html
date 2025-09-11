@@ -60,6 +60,12 @@
             {% if "view_users" in session.get("permissions", []) %}
                 <a href="{{ url_for('access.users_list') }}">ניהול גישה</a>
             {% endif %}
+
+            {# ⭐⭐⭐ תוספת: קישור לעוזר החכם (מוצג רק למשתמש מחובר) ⭐⭐⭐ #}
+            {% if session.get("username") %}
+                <a href="{{ url_for('ai.assistant_page') }}">🧠 עוזר חכם</a>
+            {% endif %}
+
             {% if session.get("username") %}
                 <a href="{{ url_for('auth.logout') }}">🚪 התנתק</a>
             {% endif %}

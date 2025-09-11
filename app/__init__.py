@@ -12,6 +12,14 @@ from app.config import Config
 from app.DB import init_db  # נדרשת לטעינה של בסיס הנתונים
 import os
 
+# === NEW: AI routes (RAG) ===
+# מוסיף בלופרינט ל-AI אם יצרת את הקבצים app/routes/ai_routes.py וכו'
+try:
+    from app.routes.ai_routes import ai_bp   # ← הוספה
+except Exception as _e:
+    ai_bp = None
+    print("⚠️ AI routes not loaded:", _e)
+
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
     app.config.from_object(Config)
@@ -31,6 +39,12 @@ def create_app():
     app.register_blueprint(category_routes)
     app.register_blueprint(supplier_routes)
     app.register_blueprint(product_color_routes)
+
+    # === NEW: Register AI blueprint safely ===
+    if ai_bp is not None:
+        app.register_blueprint(ai_bp)        # ← הוספה
+    else:
+        print("ℹ️ Skipping AI blueprint (not available)")
 
     # הדפסת כל הנתיבים שנטענו
     print("\n--- ROUTES REGISTERED ---")

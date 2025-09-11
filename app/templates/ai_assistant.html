@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>עוזר חכם – ordersync</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_assistant.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🧠 העוזר החכם</h1>
+    <p>שאל כל מה שקשור להזמנות, משלוחים, מלאי ולקוחות.</p>
+  </header>
+
+  <main class="container">
+    <form id="ask-form" class="card">
+      <label for="query">שאלה</label>
+      <textarea id="query" placeholder="לדוגמה: מה מצב המשלוח להזמנה 4512?" rows="3"></textarea>
+      <div class="actions">
+        <button id="ask-btn" type="submit">שאל</button>
+        <span id="status" class="status"></span>
+      </div>
+    </form>
+
+    <section id="answer-card" class="card hidden">
+      <h2>תשובה</h2>
+      <pre id="answer" class="answer"></pre>
+      <div id="sources" class="sources"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/ai_assistant.js') }}"></script>
+</body>
+</html>
