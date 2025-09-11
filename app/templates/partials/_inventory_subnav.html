@@ -1,0 +1,33 @@
+{# app/templates/partials/_inventory_subnav.html #}
+{% set bp = request.blueprint %}
+<div class="container mb-3">
+  <div class="btn-toolbar gap-2" role="toolbar" aria-label="Inventory subnav">
+    <div class="btn-group" role="group">
+
+      <a class="btn btn-outline-secondary {{ 'active' if bp == 'inventory_routes' else '' }}"
+         href="{{ url_for('inventory.inventory_list') }}">
+        חזרה למלאי
+      </a>
+
+      <a class="btn btn-outline-primary {{ 'active' if bp == 'product_routes' else '' }}"
+         href="{{ url_for('product_routes.list_products') }}">
+        ניהול מוצרים 🧾
+      </a>
+
+      <a class="btn btn-outline-primary {{ 'active' if bp == 'category_routes' else '' }}"
+         href="{{ url_for('category_routes.list_categories') }}">
+        ניהול קטגוריות 📚
+      </a>
+
+      <a class="btn btn-outline-primary {{ 'active' if bp == 'supplier_routes' else '' }}"
+         href="{{ url_for('supplier_routes.list_suppliers') }}">
+        ניהול ספקים 📦
+      </a>
+
+      <a class="btn btn-outline-primary {{ 'active' if bp == 'product_color_routes' else '' }}"
+         href="{{ url_for('product_color_routes.list_colors') }}">
+        ניהול צבעים 🎨
+      </a>
+    </div>
+  </div>
+</div>
