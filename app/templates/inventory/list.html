@@ -1,68 +1,81 @@
 {% extends "base.html" %}
-
 {% block title %}רשימת מלאי{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">רשימת מלאי</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 m-0">רשימת מלאי</h1>
 
-    <!-- כפתורי ניווט לניהול ישויות -->
-    <div class="d-flex flex-wrap gap-3 mb-4">
-        <a href="{{ url_for('product_routes.list_products') }}" class="btn btn-primary">📦 ניהול מוצרים</a>
-        <a href="{{ url_for('category_routes.list_categories') }}" class="btn btn-outline-secondary">📁 ניהול קטגוריות</a>
-        <a href="{{ url_for('supplier_routes.list_suppliers') }}" class="btn btn-outline-secondary">🏢 ניהול ספקים</a>
-        <a href="{{ url_for('product_color_routes.list_colors') }}" class="btn btn-outline-secondary">🎨 ניהול צבעים</a>
-    </div>
-
-    <!-- הודעות מערכת -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert alert-info">
-                <ul class="mb-0">
-                    {% for category, message in messages %}
-                        <li><strong>{{ category }}:</strong> {{ message }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- טבלת המלאי -->
-    <table class="table table-bordered table-hover text-center align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>מזהה מוצר</th>
-                <th>שם מוצר</th>
-                <th>כמות במלאי</th>
-                <th>קטגוריה</th>
-                <th>צבע</th>
-                <th>שם הספק</th>
-                <th>עודכן לאחרונה</th>
-                <th>פעולה</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in inventory %}
-            <tr>
-                <td>{{ item.product_id }}</td>
-                <td>{{ item.product_name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.category_name or "ללא" }}</td>
-                <td>{{ item.color_name or "ללא" }}</td>
-                <td>{{ item.supplier_name or "ללא" }}</td>
-                <td>
-                    {% if item.last_updated and item.last_updated.strftime %}
-                        {{ item.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
-                    {% else %}
-                        {{ item.last_updated }}
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{{ url_for('inventory.update_stock', product_id=item.product_id) }}" class="btn btn-sm btn-info">עדכן מלאי</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <div class="btn-group" role="group" aria-label="inventory-actions">
+    <a class="btn btn-primary" href="{{ url_for('product_routes.list_products') }}">
+      ניהול מוצרים
+    </a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('category_routes.list_categories') }}">
+      ניהול קטגוריות
+    </a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('supplier_routes.list_suppliers') }}">
+      ניהול ספקים
+    </a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('product_color_routes.list_colors') }}">
+      ניהול צבעים
+    </a>
+  </div>
 </div>
+
+<table id="inventoryTable" class="table table-striped table-hover table-bordered align-middle js-datatable table-st">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th class="col-thumb">תמונה</th>
+      <th>שם מוצר</th>
+      <th>קטגוריה</th>
+      <th>ספק</th>
+      <th>צבע</th>
+      <th>כמות</th>
+      <th>עודכן</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in inventory %}
+      <tr>
+        <td>{{ row.product_id }}</td>
+
+        <td class="col-thumb">
++          {% if row.image_url %}
++            <img class="prod-thumb"
++                 src="{{ row.image_url }}"
++                 alt="תמונה - {{ row.product_name }}"
++                 loading="lazy"
++                 data-image-preview="{{ row.image_url }}">
++          {% else %}
++            <div class="prod-thumb-fallback">אין תמונה</div>
++          {% endif %}
++        </td>
+
+        <td>{{ row.product_name }}</td>
+        <td>{{ row.category_name }}</td>
+        <td>{{ row.supplier_name }}</td>
+
+        <td>
++          {% if row.color_hex %}
++            <span class="d-inline-block rounded-circle border"
++                  style="width:14px;height:14px;background-color: {{ row.color_hex }};"
++                  title="{{ row.color_name }}"></span>
++            <span class="ms-1">{{ row.color_name }}</span>
++          {% else %}
++            <span class="text-muted">—</span>
++          {% endif %}
++        </td>
+
+        <td>{{ row.quantity }}</td>
+        <td>
++          {% if row.last_updated and row.last_updated.strftime %}
++            {{ row.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
++          {% else %}
++            {{ row.last_updated or '—' }}
++          {% endif %}
++        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
