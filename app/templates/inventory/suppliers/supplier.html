@@ -7,8 +7,9 @@
     <a href="{{ url_for('supplier_routes.add_supplier_form') }}" class="btn btn-success mb-3">➕ הוסף ספק חדש</a>
 
     {% if suppliers %}
-    <table class="table table-bordered table-hover text-center">
-        <thead class="thead-light">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle js-datatable table-st" id="tbl-suppliers">
+        <thead class="table-light">
             <tr>
                 <th>מס'</th>
                 <th>שם החברה</th>
@@ -47,3 +48,4 @@
     {% endif %}
 </div>
 {% endblock %}
+
