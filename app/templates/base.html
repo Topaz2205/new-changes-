@@ -27,7 +27,7 @@
       'product_routes', 'category_routes',
       'supplier_routes', 'product_color_routes'
     ] %}
-      {% include "partials/_inventory_subnav.html" %}
+      {% include "partials/_inventory_subnav.html" ignore missing %}
     {% endif %}
     {% block content %}{% endblock %}
   </main>
@@ -68,4 +68,5 @@
   {% block extra_js %}{% endblock %}
 </body>
 </html>
+
 
