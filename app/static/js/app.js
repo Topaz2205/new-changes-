@@ -26,7 +26,7 @@
       if (!src) return;
       var modal = document.getElementById('imageModal');
       if (!modal) return;
-      var img = modal.querySelector('#imageModalImg');
++      var img = modal.querySelector('#modalImage') || modal.querySelector('#imageModalImg') || modal.querySelector('img');
       img.src = src;
       var modalObj = bootstrap.Modal.getOrCreateInstance(modal);
       modalObj.show();
