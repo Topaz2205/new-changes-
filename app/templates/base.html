@@ -64,47 +64,8 @@
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v=ui-3"></script>
 
-  <!-- תרגום + אתחול אוטומטי של כל הטבלאות -->
-  <script>
-    (function () {
-        if (!window.jQuery || !$.fn.dataTable) return;
-
-        /* ברירות מחדל: עברית, פריסה נעימה, עמוד=10 */
-        $.extend(true, $.fn.dataTable.defaults, {
-            language: { url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/he.json" },
-            pageLength: 10,
-            order: [],
-            autoWidth: false,
-            dom:
-            "<'row align-items-center mb-2'<'col-auto'l><'col text-end'f>>" +
-            "<'row'<'col-12'tr>>" +
-            "<'row align-items-center mt-2'<'col'i><'col-auto'p>>"
-        });
-
-        function initDT(ctx) {
-            $('table.js-datatable', ctx || document).each(function () {
-            if (!$.fn.DataTable.isDataTable(this)) {
-                $(this).DataTable();
-            }
-            });
-        }
-
-        /* DOM Ready */
-        $(function () { initDT(document); });
-
-        /* תמיכה ב-HTMX: אתחול רק למה שנכנס */
-        document.body.addEventListener('htmx:afterSwap', function (e) {
-            var root = (e.detail && e.detail.target) ? e.detail.target : document;
-            initDT(root);
-        });
-
-        /* פלייסהולדר נחמד לשדה החיפוש */
-        $(document).on('init.dt', function () {
-            $('.dataTables_filter input').attr('placeholder', 'חפש טקסט…');
-        });
-    })();
-  </script>
-
+  
   {% block extra_js %}{% endblock %}
 </body>
 </html>
+
