@@ -1,0 +1,13 @@
+diff --git a/app/templates/inventory/color/color.html b/app/templates/inventory/color/color.html
+index 64b17a2..09c006f 100644
+--- a/app/templates/inventory/color/color.html
++++ b/app/templates/inventory/color/color.html
+@@ -7,7 +7,7 @@
+     <a href="{{ url_for('product_color_routes.add_color_form') }}" class="btn btn-primary mb-3">➕ הוסף צבע</a>
+ 
+     {% if colors %}
+-        <table class="table table-striped table-bordered">
++        <table class="table table-striped table-hover align-middle js-datatable table-st" id="...">
+             <thead>
+                 <tr>
+                     <th>מזהה</th>

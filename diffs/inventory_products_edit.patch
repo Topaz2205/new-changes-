@@ -1,0 +1,22 @@
+diff --git a/app/templates/inventory/products/edit_product.html b/app/templates/inventory/products/edit_product.html
+index 9e562ea..5e278a7 100644
+--- a/app/templates/inventory/products/edit_product.html
++++ b/app/templates/inventory/products/edit_product.html
+@@ -3,6 +3,17 @@
+ {% block content %}
+ <div class="container mt-4">
+     <h2>עריכת מוצר: {{ product.name }}</h2>
++    {% if product.image_url %}
++        <div class="card mb-3">
++            <img
++            src="{{ product.image_url }}"
++            alt="תמונה של {{ product.name }}"
++            class="card-img-top product-hero"
++            data-image-preview="{{ product.image_url }}"
++            style="cursor: zoom-in;"
++            >
++        </div>
++    {% endif %}
+ 
+     <form method="POST" action="{{ url_for('product_routes.edit_product', id=product.id) }}">
+         <div class="mb-3">

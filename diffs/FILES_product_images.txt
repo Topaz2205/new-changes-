@@ -1,0 +1,15 @@
+app/DB/final_create_tables.sql
+app/DB/insert_data.sql
+app/controllers/inventory/inventory_controller.py
+app/controllers/inventory/product_controller.py
+app/routes/inventory/product_routes.py
+app/static/js/script.js
+app/templates/access/permissions.html
+app/templates/access/roles.html
+app/templates/access/users.html
+app/templates/inventory/categories/category.html
+app/templates/inventory/color/color.html
+app/templates/inventory/products/edit_product.html
+app/templates/inventory/suppliers/supplier.html
+app/templates/orders/list.html
+app/templates/partials/_inventory_subnav.html

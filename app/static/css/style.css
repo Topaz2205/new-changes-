@@ -206,3 +206,26 @@ html, body{
   box-shadow: 0 2px 12px rgba(0,0,0,.08);
 }
 
+/* עמודת סטטוס בטבלת הזמנות */
+#tbl-orders td.status-col { white-space: nowrap; }
+#tbl-orders td.status-col .badge { margin-inline-end: .5rem; }
+
+/* אם DataTables יוצר גלילה אופקית, שמור על רוחב מלא */
+#tbl-orders_wrapper .dataTables_scrollHeadInner,
+#tbl-orders_wrapper .dataTables_scrollBody table {
+  width: 100% !important;
+}
+
+/* עמודת סטטוס: לא לקצר עם ... , ולאפשר מקום לפקדים */
+#tbl-orders th.col-status,
+#tbl-orders td.status-col {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap;
+  min-width: 460px;   /* אפשר להגדיל/להקטין לפי הצורך */
+}
+
+/* מראה נוח לפקדים בתא */
+#tbl-orders td.status-col form { display: inline-flex; align-items: center; gap: .5rem; }
+#tbl-orders td.status-col select { max-width: 10rem; }
+#tbl-orders td.status-col input  { max-width: 14rem; }

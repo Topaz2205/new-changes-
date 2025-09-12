@@ -19,16 +19,17 @@ class AccessController:
             user_dict = dict(row)
 
             # --- עיבוד created_at לפורמט אחיד ---
-            created_at = user_dict.get("created_at")
-            if created_at:
-                try:
-                    # אם כולל שבר שנייה
-                    parsed_dt = datetime.strptime(str(created_at), "%Y-%m-%d %H:%M:%S.%f")
-                except ValueError:
-                    # אם לא כולל שבר שנייה
-                    parsed_dt = datetime.strptime(str(created_at), "%Y-%m-%d %H:%M:%S")
-                user_dict["created_at"] = parsed_dt.strftime("%Y-%m-%d %H:%M:%S")
+            created_at = row.get("created_at")
 
+# אם כבר קיבלנו datetime מ-psycopg2 (timestamptz) – לא צריך לפרסר
+            if not isinstance(created_at, datetime):
+                try:
+        # תומך במחרוזות ISO עם מיקרושניות ואזון זמן: "2024-06-01 12:34:56.115310+00:00"
+                    created_at = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+                except Exception:
+                    created_at = None  # נפילה שקטה – לא שוברים את העמוד
+
+            row["created_at"] = created_at
             # --- הוספת הרשאות ---
             role_id = user_dict.get("role_id")
             permissions = self.get_permissions_by_role_id(role_id)

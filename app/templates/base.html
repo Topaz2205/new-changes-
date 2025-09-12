@@ -17,38 +17,8 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body>
-<<<<<<< HEAD
-    <div class="navbar">
-        <div class="logo">
-            <a href="{{ url_for('main_routes.home') }}">🏠 דף הבית</a>
-            {% if session.get('username') %}
-                <span class="user-info">| 👤 {{ session.username }}</span>
-            {% endif %}
-        </div>
-        <div class="nav-links">
-            {% if "view_orders" in session.get("permissions", []) %}
-                <a href="{{ url_for('orders.list_orders') }}">ניהול הזמנות</a>
-            {% endif %}
-            {% if "view_inventory" in session.get("permissions", []) %}
-                <a href="{{ url_for('inventory.inventory_list') }}">ניהול מלאי</a>
-            {% endif %}
-            {% if "view_users" in session.get("permissions", []) %}
-                <a href="{{ url_for('access.users_list') }}">ניהול גישה</a>
-            {% endif %}
 
-            {# ⭐⭐⭐ תוספת: קישור לעוזר החכם (מוצג רק למשתמש מחובר) ⭐⭐⭐ #}
-            {% if session.get("username") %}
-                <a href="{{ url_for('ai.assistant_page') }}">🧠 עוזר חכם</a>
-            {% endif %}
-
-            {% if session.get("username") %}
-                <a href="{{ url_for('auth.logout') }}">🚪 התנתק</a>
-            {% endif %}
-        </div>
-    </div>
-=======
->>>>>>> 152f9cc4250a66676a3030d59ea486ac2f6579ed
-
+    
   {% include "partials/_navbar.html" %}
 
   <main class="container my-4 pt-5">
