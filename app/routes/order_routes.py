@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort
+from flask import Blueprint, render_template, request, redirect, url_for, abort, render_template_string
 from datetime import datetime
 from app.controllers.orders.order_controller import OrderController
 from app.utils.decorators import login_required, permission_required  
@@ -98,7 +98,53 @@ def set_status(order_id):
     try:
         new_status = (request.form.get("status") or "").strip().upper()
         delay_reason = request.form.get("delay_reason") or None
+
+        # עדכון סטטוס בבסיס הנתונים
         controller.update_order_status(order_id, new_status, delay_reason=delay_reason)
+
+        # אם זה מגיע מ-HTMX – מחזירים את תא הסטטוס המעודכן בלבד
+        if request.headers.get("HX-Request") == "true":
+            # שלוף את ההזמנה המעודכנת (התאם לשם הפונקציה אצלך)
+            order = controller.get_order_by_id(order_id)
+
+            # מחזירים את תוכן ה-<td> בדיוק כמו ב-list.html
+            td_tpl = """
+<td id="status-cell-{{ order.order_id }}" class="status-col align-middle text-nowrap">
+  {% set s = (order.status or '')|upper %}
+  {% set color = 'secondary' %}
+  {% if s == 'NEW' %}{% set color = 'info' %}
+  {% elif s == 'PAID' %}{% set color = 'primary' %}
+  {% elif s == 'SHIPPED' %}{% set color = 'warning' %}
+  {% elif s == 'DELIVERED' %}{% set color = 'success' %}
+  {% elif s in ['CANCELLED','CANCELED'] %}{% set color = 'danger' %}
+  {% endif %}
+
+  <span class="badge bg-{{ color }} me-2">{{ s or 'לא ידוע' }}</span>
+
+  <form method="POST"
+        action="{{ url_for('orders.set_status', order_id=order.order_id) }}"
+        class="d-inline-flex align-items-center gap-2"
+        hx-post="{{ url_for('orders.set_status', order_id=order.order_id) }}"
+        hx-target="#status-cell-{{ order.order_id }}"
+        hx-swap="outerHTML">
+    <select name="status" required class="form-select form-select-sm" style="max-width:10rem;">
+      <option value="NEW"       {{ 'selected' if s == 'NEW' else '' }}>NEW</option>
+      <option value="PAID"      {{ 'selected' if s == 'PAID' else '' }}>PAID</option>
+      <option value="SHIPPED"   {{ 'selected' if s == 'SHIPPED' else '' }}>SHIPPED</option>
+      <option value="DELIVERED" {{ 'selected' if s == 'DELIVERED' else '' }}>DELIVERED</option>
+      <option value="CANCELLED" {{ 'selected' if s in ['CANCELLED','CANCELED'] else '' }}>CANCELLED</option>
+    </select>
+
+    <input type="text" name="delay_reason" placeholder="סיבת עיכוב (לא חובה)"
+           class="form-control form-control-sm" style="max-width:14rem;">
+    <button type="submit" class="btn btn-sm btn-primary">עדכן</button>
+  </form>
+</td>
+"""
+            return render_template_string(td_tpl, order=order)
+
+        # בקשה רגילה (לא HTMX): חזרה לרשימת ההזמנות
         return redirect(url_for("orders.list_orders"))
+
     except ValueError as e:
         return str(e), 400

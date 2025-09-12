@@ -1,0 +1,13 @@
+diff --git a/app/templates/inventory/categories/category.html b/app/templates/inventory/categories/category.html
+index bc807ba..dfa3722 100644
+--- a/app/templates/inventory/categories/category.html
++++ b/app/templates/inventory/categories/category.html
+@@ -6,7 +6,7 @@
+     <a href="{{ url_for('category_routes.add_category_form') }}" class="btn btn-success mb-3">➕ הוסף קטגוריה</a>
+ 
+     {% if categories %}
+-        <table class="table table-bordered table-striped">
++        <table class="table table-striped table-hover align-middle js-datatable table-st" id="...">
+             <thead>
+                 <tr>
+                     <th>מזהה</th>

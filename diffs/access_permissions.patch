@@ -1,0 +1,13 @@
+diff --git a/app/templates/access/permissions.html b/app/templates/access/permissions.html
+index 2dac5cb..bf29b8a 100644
+--- a/app/templates/access/permissions.html
++++ b/app/templates/access/permissions.html
+@@ -20,7 +20,7 @@
+     {% endwith %}
+ 
+     {% if permissions %}
+-        <table border="1">
++        <table border="1" class="table table-striped table-hover align-middle js-datatable table-st" id="...">
+             <thead>
+                 <tr>
+                     <th>מזהה</th>

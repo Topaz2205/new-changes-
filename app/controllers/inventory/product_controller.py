@@ -8,39 +8,102 @@ class ProductController:
     def __init__(self):
         pass
 
-    def create_product(self, product):
+    def create_product(self, data):
+        """
+        מקבל dict או אובייקט Product ומכניס שורה ל-Products.
+        - ממיר discontinued ל-True/False
+        - ממיר price ל-float ומזהים ל-int
+        - מאפס לשדות NULL מותרים כשנשלח ריק
+        - מוסיף created_at/updated_at = CURRENT_TIMESTAMP
+        """
+
+        # מיפוי קלט -> עמודות DB (לפי שמות השדות אצלך)
+        mapping = {
+            'name'             : 'name',
+            'supplier_id'      : 'supplier_id',
+            'category_id'      : 'category_id',
+            'quantity_per_unit': 'quantity_per_unit',
+            'color_id'         : 'color_id',
+            'price'            : 'price',
+            'unit_price'       : 'price',   # תאימות: unit_price -> price
+            'units_in_stock'   : 'units_in_stock',
+            'description'      : 'description',
+            'image_url'        : 'image_url',
+            'discontinued'     : 'discontinued',
+        }
+        nullable_cols = {'color_id', 'image_url', 'quantity_per_unit', 'description'}
+
+        # --- נרמול קלט לאובייקט dict ---
+        def _coerce_to_dict(obj):
+            if isinstance(obj, dict):
+                return obj
+            if hasattr(obj, 'to_dict'):
+                return obj.to_dict()
+            # נפילה לאטריבוטים לפי שמות המפתחות המוכרים
+            out = {}
+            for k in mapping.keys():
+                if hasattr(obj, k):
+                    out[k] = getattr(obj, k)
+            return out
+
+        data = _coerce_to_dict(data) or {}
+
+        # עזרי טיפוס
+        def _is_empty(v):
+            return v is None or (isinstance(v, str) and v.strip() == "")
+
+        def _to_bool(v):
+            if isinstance(v, bool):
+                return v
+            s = str(v).strip().lower() if v is not None else ""
+            if s in ("1", "true", "t", "yes", "y", "on"):
+                return True
+            if s in ("0", "false", "f", "no", "n", "off", ""):
+                return False
+            return False  # ברירת מחדל בטוחה
+
+        cols, vals, placeholders = [], [], []
+
+        # שמירה על סדר יציב לפי mapping
+        for key, col in mapping.items():
+            if key not in data:
+                continue
+            val = data.get(key)
+
+            # נרמול BOOLEAN
+            if key == 'discontinued':
+                val = _to_bool(val)
+
+            # NULL לשדות ריקים מותרים
+            if key in nullable_cols and _is_empty(val):
+                cols.append(col); vals.append(None); placeholders.append("?")
+                continue
+
+            # המרות טיפוס
+            try:
+                if col == 'price' and not _is_empty(val):
+                    val = float(val)
+                elif key in ('supplier_id', 'category_id', 'units_in_stock', 'color_id') and not _is_empty(val):
+                    val = int(val)
+            except (TypeError, ValueError):
+                # ערך לא תקין – מדלגים על השדה
+                continue
+
+            cols.append(col); vals.append(None if _is_empty(val) else val); placeholders.append("?")
+
+        # אם לא סופק discontinued – שים False כברירת מחדל
+        if 'discontinued' not in data:
+            cols.append('discontinued'); vals.append(False); placeholders.append("?")
+
+        # חותמות זמן מה-DB (ללא פרמטרים)
+        cols.extend(['created_at', 'updated_at'])
+        placeholders.extend(['CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'])
+
+        sql = f"INSERT INTO Products ({', '.join(cols)}) VALUES ({', '.join(placeholders)})"
+
         conn = get_db_connection()
         cur = conn.cursor()
-
-        # תמיכה גם אם במקרה יגיע product.price (לא רק unit_price)
-        unit_price = getattr(product, "unit_price", None)
-        if unit_price is None:
-            unit_price = getattr(product, "price", 0)
-
-        now = datetime.now()
-        discontinued = int(bool(getattr(product, "discontinued", 0)))
-
-        cur.execute("""
-            INSERT INTO Products (
-                name, supplier_id, category_id, description,
-                price, image_url, units_in_stock, quantity_per_unit,
-                color_id, discontinued, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            product.name,
-            product.supplier_id,
-            product.category_id,
-            product.description or "",
-            float(unit_price),
-            product.image_url or "",
-            int(product.units_in_stock or 0),
-            product.quantity_per_unit or "",
-            product.color_id if getattr(product, "color_id", None) not in ("", None) else None,
-            discontinued,
-            getattr(product, "created_at", None) or now,
-            getattr(product, "updated_at", None) or now,
-        ))
+        cur.execute(sql, tuple(vals))
         conn.commit()
         conn.close()
 
@@ -76,35 +139,43 @@ class ProductController:
     def update_product(self, product_id: int, updates: dict):
         """
         עדכון חלקי של מוצר:
-        - נעדכן רק את המפתחות שמופיעים ב-updates.
-        - מיפוי unit_price → price (DB).
-        - המרת טיפוסים בטוחה (int/float/bool).
-        - תמיכה באיפוס שדות ניתנים ל-NULL (למשל color_id, image_url).
-        - עדכון updated_at אוטומטית.
+        - מעדכן רק מפתחות שמופיעים ב-updates
+        - מיפוי unit_price -> price
+        - המרת טיפוסים בטוחה (int/float/bool)
+        - תמיכה באיפוס שדות ניתנים ל-NULL
+        - updated_at מתעדכן אוטומטית (DB CURRENT_TIMESTAMP)
         """
+
         if not updates:
             return
 
-        conn = get_db_connection()
-        cur = conn.cursor()  
-
-        # מיפוי מפתחות מהקוד לעמודות בטבלה
+        # מיפוי מפתחות מהקוד לעמודות DB
         mapping = {
             'name'             : 'name',
             'supplier_id'      : 'supplier_id',
             'category_id'      : 'category_id',
             'quantity_per_unit': 'quantity_per_unit',
             'color_id'         : 'color_id',
-            'price'            : 'price',     # עמודה אמיתית ב-DB
-            'unit_price'       : 'price',     # תאימות: אם שולחים unit_price נמפה ל-price
+            'price'            : 'price',
+            'unit_price'       : 'price',          # תאימות: unit_price -> price
             'units_in_stock'   : 'units_in_stock',
             'description'      : 'description',
             'image_url'        : 'image_url',
             'discontinued'     : 'discontinued',
         }
 
-        # אילו עמודות מותר לאפס ל-NULL במפורש (כשהערך None/"" מהטופס)
+        # אילו *מפתחות* מותר לאפס ל-NULL
         nullable_cols = {'color_id', 'image_url', 'quantity_per_unit', 'description'}
+
+        def _to_bool(v):
+            if isinstance(v, bool):
+                return v
+            s = str(v).strip().lower() if v is not None else ''
+            if s in ('1', 'true', 't', 'yes', 'y', 'on'):
+                return True
+            if s in ('0', 'false', 'f', 'no', 'n', 'off', ''):
+                return False
+            return None  # ערך לא ברור – עדיף לא לעדכן
 
         set_parts, params = [], []
 
@@ -114,44 +185,46 @@ class ProductController:
 
             col = mapping[key]
 
-            # נרמול בוליאני
+            # נרמול בוליאני→True/False (לא 0/1)
             if key == 'discontinued':
-                value = 1 if value in (True, 1, '1', 'true', 'on', 'yes') else 0
+                value = _to_bool(value)
+                if value is None:
+                    # לא לעדכן את העמודה אם הערך לא ברור
+                    continue
 
             # איפוס שדות ניתנים ל-NULL
             if key in nullable_cols and (value is None or value == ''):
                 set_parts.append(f"{col} = NULL")
                 continue
 
-            # המרת טיפוסים בטוחה
+            # המרת טיפוסים
             try:
-                if col == 'price' and value is not None and value != '':
+                if col == 'price' and value not in (None, ''):
                     value = float(value)
                 elif key in ('supplier_id', 'category_id', 'units_in_stock', 'color_id') and value not in (None, ''):
                     value = int(value)
             except (TypeError, ValueError):
-                # אם הטיפוס לא תקין מדלגים על המפתח הזה במקום להפיל את הבקשה כולה
+                # טיפוס לא תקין – דלג על המפתח הזה
                 continue
 
-            # נתעלם מ-None עבור עמודות שאינן nullable (שלא נדרוס חובה)
             if value is None:
+                # אל תדרוס עמודות לא-ניתנות ל-NULL
                 continue
 
             set_parts.append(f"{col} = ?")
             params.append(value)
 
         if not set_parts:
-            conn.close()
             return
 
-        # עדכון חותמת זמן
-        set_parts.append("updated_at = ?")
-        params.append(datetime.now())
+        # חותמת זמן מה-DB (ללא פרמטר)
+        set_parts.append("updated_at = CURRENT_TIMESTAMP")
 
-        # WHERE
-        params.append(product_id)
         sql = f"UPDATE Products SET {', '.join(set_parts)} WHERE id = ?"
+        params.append(product_id)
 
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute(sql, params)
         conn.commit()
         conn.close()
