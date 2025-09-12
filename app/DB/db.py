@@ -3,8 +3,9 @@
 # מודול גנרי לעבודה מול SQLite/Postgres עם אותו API
 # - טוען .env (אם קיים)
 # - בוחר דיאלקט לפי DB_BACKEND=sqlite|postgres
-# - ממיר אוטומטית סימני שאלה '?' ל-%s ב-Postgres
-# - לא מחזיר cursor מחוץ ל-context (מונע "cursor already closed")
+# - ממיר אוטומטית '?' ל-%s ב-Postgres
+# - get_db_connection מחזיר חיבור רגיל (לא contextmanager)
+# - db_context הוא ה-contextmanager לשימוש פנימי בפונקציות העזר
 # ------------------------------------------------------------
 
 import os
@@ -14,7 +15,7 @@ from typing import Any, Iterable, Optional
 
 # --- טעינת ENV (אופציונלי) ---
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv  # type: ignore
     load_dotenv()
 except Exception:
     pass
@@ -23,7 +24,6 @@ DB_BACKEND = os.getenv("DB_BACKEND", "sqlite").lower().strip()   # 'sqlite' או
 
 # ------------------------------------------------------------
 # עוזר: הסרת הערות SQL לפני המרת '?'
-#   מטפל ב- -- עד סוף שורה, וב- /* ... */ רב-שורות
 # ------------------------------------------------------------
 _comment_line = re.compile(r"--.*?$", re.MULTILINE | re.DOTALL)
 _comment_block = re.compile(r"/\*.*?\*/", re.DOTALL)
@@ -34,25 +34,25 @@ def _strip_sql_comments(sql: str) -> str:
     return sql
 
 # ------------------------------------------------------------
-# המרה בטוחה יחסית של '?' ל- %s (לא נוגעת בשאלות בתוך מחרוזות / dollar-quoted)
+# המרה בטוחה יחסית של '?' ל- %s (לא נוגעת במחרוזות / dollar-quoted)
 # ------------------------------------------------------------
 def _convert_qmark_to_psycopg(sql: str) -> str:
     out: list[str] = []
     in_single = False
     in_double = False
-    in_dollar: Optional[str] = None  # לדולר-קואוטים $$label$$
+    in_dollar: Optional[str] = None
     i = 0
     while i < len(sql):
         ch = sql[i]
 
-        # זיהוי תחילת/סיום דולר-קואוט $$ or $tag$
+        # זיהוי $$ או $tag$
         if not in_single and not in_double:
             if in_dollar is None and ch == "$":
                 j = i + 1
                 while j < len(sql) and (sql[j].isalnum() or sql[j] == "_"):
                     j += 1
                 if j < len(sql) and sql[j] == "$":
-                    in_dollar = sql[i:j+1]  # כגון "$$" או "$tag$"
+                    in_dollar = sql[i:j+1]
                     out.append(in_dollar)
                     i = j + 1
                     continue
@@ -65,14 +65,10 @@ def _convert_qmark_to_psycopg(sql: str) -> str:
         if in_dollar is None:
             if ch == "'" and not in_double:
                 in_single = not in_single
-                out.append(ch)
-                i += 1
-                continue
+                out.append(ch); i += 1; continue
             if ch == '"' and not in_single:
                 in_double = not in_double
-                out.append(ch)
-                i += 1
-                continue
+                out.append(ch); i += 1; continue
 
         if ch == "?" and not in_single and not in_double and in_dollar is None:
             out.append("%s")
@@ -85,8 +81,49 @@ def _convert_qmark_to_psycopg(sql: str) -> str:
 # חיבורי DB
 # ------------------------------------------------------------
 if DB_BACKEND == "postgres":
-    import psycopg2
-    import psycopg2.extras
+    import psycopg2  # type: ignore
+    import psycopg2.extras  # type: ignore
+
+    # --- עטיפות ל-Postgres: המרת '?' ל-%s בכל execute/executemany ---
+    class _PGCursorWrapper:
+        def __init__(self, cur):
+            self._cur = cur
+
+        def execute(self, sql, params=None):
+            sql_no_comments = _strip_sql_comments(sql)
+            sql_conv = _convert_qmark_to_psycopg(sql_no_comments)
+            if params is None:
+                return self._cur.execute(sql_conv)
+            return self._cur.execute(sql_conv, tuple(params))
+
+        def executemany(self, sql, seq_of_params):
+            sql_no_comments = _strip_sql_comments(sql)
+            sql_conv = _convert_qmark_to_psycopg(sql_no_comments)
+            return self._cur.executemany(sql_conv, [tuple(p) for p in (seq_of_params or [])])
+
+        def __enter__(self):
+            self._cur.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self._cur.__exit__(*args)
+
+        def __getattr__(self, name):
+            return getattr(self._cur, name)
+
+    class _PGConnectionWrapper:
+        def __init__(self, conn):
+            self._conn = conn
+
+        def cursor(self, *args, **kwargs):
+            real = self._conn.cursor(*args, **kwargs)
+            return _PGCursorWrapper(real)
+
+        def __getattr__(self, name):
+            return getattr(self._conn, name)
+
+        def close(self):
+            return self._conn.close()
 
     def _connect():
         host = os.getenv("DB_HOST", "localhost")
@@ -95,7 +132,7 @@ if DB_BACKEND == "postgres":
         user = os.getenv("DB_USER", "ordersync_user")
         password = os.getenv("DB_PASSWORD", "")
         sslmode = os.getenv("DB_SSLMODE", "require")
-        return psycopg2.connect(
+        conn = psycopg2.connect(
             host=host,
             port=port,
             dbname=dbname,
@@ -104,26 +141,35 @@ if DB_BACKEND == "postgres":
             sslmode=sslmode,
             cursor_factory=psycopg2.extras.RealDictCursor,  # החזר dict
         )
+        return _PGConnectionWrapper(conn)
+
 else:
     import sqlite3
     sqlite3.register_adapter(bool, int)
 
     def _connect():
         db_file = os.getenv("SQLITE_PATH", "app/DB/database.db")
-        conn = sqlite3.connect(db_file, detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = sqlite3.connect(db_file, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         with conn:
             conn.execute("PRAGMA foreign_keys=ON;")
         return conn
 
 # ------------------------------------------------------------
-# ממשק עבודה אחיד
+# API כפול: get_db_connection (חיבור רגיל) + db_context (ניהול אוטומטי)
 # ------------------------------------------------------------
-@contextlib.contextmanager
 def get_db_connection():
     """
-    מניב Connection פתוח בתוך context, וסוגר/מגלגל חזרה בסיום.
-    אין להחזיר cursor מחוץ ל-context.
+    מחזיר אובייקט חיבור אמיתי (לא contextmanager),
+    כדי שקוד קיים יעבוד: conn = get_db_connection(); conn.cursor()
+    """
+    return _connect()
+
+@contextlib.contextmanager
+def db_context():
+    """
+    Context manager לעבודה בטוחה עם חיבור (commit/rollback/close אוטומטי).
+    משמש את פונקציות העזר בתוך המודול.
     """
     conn = _connect()
     try:
@@ -139,12 +185,12 @@ def get_db_connection():
     finally:
         conn.close()
 
+# ------------------------------------------------------------
+# ממשק עבודה אחיד (משתמש ב-db_context)
+# ------------------------------------------------------------
 def execute(sql: str, params: Iterable[Any] | None = None) -> int:
-    """
-    הרצת שאילתה (INSERT/UPDATE/DELETE/DDL).
-    מחזיר rowcount. לא מחזיר cursor (כדי לא להחזיק אובייקטים אחרי סגירת החיבור).
-    """
-    with get_db_connection() as conn:
+    """INSERT/UPDATE/DELETE/DDL. מחזיר rowcount."""
+    with db_context() as conn:
         if DB_BACKEND == "postgres":
             sql_no_comments = _strip_sql_comments(sql)
             sql_conv = _convert_qmark_to_psycopg(sql_no_comments)
@@ -152,21 +198,18 @@ def execute(sql: str, params: Iterable[Any] | None = None) -> int:
                 cur.execute(sql_conv, tuple(params or []))
                 return cur.rowcount
         else:
-            # sqlite
             cur = conn.execute(sql, tuple(params or []))
             return cur.rowcount
 
 def query_all(sql: str, params: Iterable[Any] | None = None) -> list[dict]:
-    """
-    מבצע SELECT ומחזיר רשימת dict-ים.
-    """
-    with get_db_connection() as conn:
+    """SELECT מרובה. מחזיר רשימת dict-ים."""
+    with db_context() as conn:
         if DB_BACKEND == "postgres":
             sql_no_comments = _strip_sql_comments(sql)
             sql_conv = _convert_qmark_to_psycopg(sql_no_comments)
             with conn.cursor() as cur:
                 cur.execute(sql_conv, tuple(params or []))
-                rows = cur.fetchall()  # RealDictRow -> dict
+                rows = cur.fetchall()
                 return list(rows)
         else:
             cur = conn.execute(sql, tuple(params or []))
@@ -174,10 +217,8 @@ def query_all(sql: str, params: Iterable[Any] | None = None) -> list[dict]:
             return [dict(r) for r in rows]
 
 def query_one(sql: str, params: Iterable[Any] | None = None) -> Optional[dict]:
-    """
-    מבצע SELECT ומחזיר dict אחד או None.
-    """
-    with get_db_connection() as conn:
+    """SELECT יחיד. מחזיר dict או None."""
+    with db_context() as conn:
         if DB_BACKEND == "postgres":
             sql_no_comments = _strip_sql_comments(sql)
             sql_conv = _convert_qmark_to_psycopg(sql_no_comments)
@@ -199,10 +240,9 @@ def insert_and_get_id(
 ):
     """
     הכנסת רשומה והחזרת המפתח שנוצר.
-    ב-Postgres: מומלץ לכלול RETURNING <pk> ב-SQL.
-    אם אין RETURNING ונמסר table_for_currval, ננסה currval(pg_get_serial_sequence(...)).
+    ב-Postgres: עדיף לכלול RETURNING <pk>. אם לא—ננסה currval/lastval לפי הצורך.
     """
-    with get_db_connection() as conn:
+    with db_context() as conn:
         if DB_BACKEND == "postgres":
             sql_no_comments = _strip_sql_comments(sql)
             sql_conv = _convert_qmark_to_psycopg(sql_no_comments)
@@ -228,7 +268,7 @@ def insert_and_get_id(
                     r2 = cur2.fetchone()
                     if r2 and "last_id" in r2:
                         return r2["last_id"]
-            # 3) fallback אחרון (לא תמיד בטוח אם יש טריגרים/ריסיקוונסים מרובים)
+            # 3) fallback אחרון
             with conn.cursor() as cur3:
                 cur3.execute("SELECT lastval() AS last_id;")
                 r3 = cur3.fetchone()
@@ -238,30 +278,22 @@ def insert_and_get_id(
             return cur.lastrowid
 
 def run_sql_script(path: str):
-    """
-    הרצת קובץ SQL (פשוט). לסקריפטים גדולים/מורכבים עדיף להשתמש ב-psql -f.
-    """
+    """הרצת קובץ SQL שלם."""
     sql = open(path, "r", encoding="utf-8").read()
     if DB_BACKEND == "postgres":
-        with get_db_connection() as conn:
+        with db_context() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
     else:
-        with get_db_connection() as conn:
+        with db_context() as conn:
             conn.executescript(sql)
 
 # ------------------------------------------------------------
-# כלי עזר קטנים
+# כלי עזר
 # ------------------------------------------------------------
 def ping() -> bool:
-    """
-    בודק חיבור בסיסי ל-DB.
-    """
     try:
-        if DB_BACKEND == "postgres":
-            return query_one("SELECT 1 AS ok") is not None
-        else:
-            return query_one("SELECT 1 AS ok") is not None
+        return query_one("SELECT 1 AS ok") is not None
     except Exception:
         return False
 
